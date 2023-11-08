@@ -1,4 +1,4 @@
-from parser import *
+from pla_parser import *
 from canonicals import *
 from canonicals_inverse import *
 from minimize import *
