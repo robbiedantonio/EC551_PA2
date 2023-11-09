@@ -59,10 +59,6 @@ for ovar, oexp in minimized_POS_dict.items():
 # 	print(op,':', to_POS(minimized_POS_dict[op], input_names))
 
 
-for op, op_list in output_dict.items():
-	print(op,':', getDelaySOP(minimized_SOP_dict[op]), input_names)
-
-
 
 
 
