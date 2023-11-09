@@ -1,4 +1,4 @@
-from collections import Counter
+
 
 # global behaves like a static vector, easier than cascade returning
 expanded_terms = []
@@ -22,7 +22,6 @@ def expand_term(index, term):
     else:
         if term[index] == '-':
             x = list(term)
-            arr = []
 
             x[index] = '0'
             expand_term(index+1, "".join(x))
@@ -108,47 +107,51 @@ def parse_file(filename):
                 truth table
 
     '''
+ 
+    circuit = {
+        'ninputs':-1,
+        'noutputs':-1,
+        'inputs':[],
+        'outputs':[],
 
-    inputs = []
-    outputs = []
-    boolean_expressions = []
-    circuit = {}
+        'boolean_expressions':[],
+        'marked_terms':[]
+    }
+    truth_table = {}
 
-    ninputs = -1
-    noutputs = -1
-    
-    tt_true = False
+    exp_counter = 0
 
     file = open(filename, 'r')
 
     for line in file:
         exp_t = ""
-        terms = []
 
         if '.e' in line:
             break
         if '.ni ' in line:
-            ninputs=int(line.split(" ")[1])
+            circuit['ninputs']=int(line.split(" ")[1])
         elif '.no ' in line:
-            noutputs=int(line.split(" ")[1])
+            circuit['noutputs']=int(line.split(" ")[1])
         elif '.vi ' in line:
             for in_var in line.split(" ")[1::]:
                 if "#" in in_var:
                     break
                 if in_var == '':
                     continue
-                inputs.append(in_var.strip())
+                circuit['inputs'].append(in_var.strip())
         elif '.vo ' in line:
             for out_var in line.split(" ")[1::]:
                 if "#" in out_var:
                     break
                 if out_var == '':
                     continue
-                outputs.append(out_var.strip())
+                circuit['outputs'].append(out_var.strip())
     #           
     # circuit expression input
     #
         elif '.sop' in line or '.pos' in line:
+            terms = []
+            expanded_terms = []
             # print(line.split(" ")[1::])
             for term in line.split(" ")[1::]:
                 if term.strip() == '': 
@@ -160,17 +163,18 @@ def parse_file(filename):
                     exp_t = "POS"
                 terms.append(term.strip())
 
-            expression = parse_term(exp_t, ninputs, inputs, terms)
-            boolean_expressions.append(expression)
+            expression = parse_term(exp_t, circuit['ninputs'], circuit['inputs'], terms)
+            circuit['boolean_expressions'].append(expression)
        
         #   
         # expand the prime implicants into minterms
         #   
             for term in expression:
                 # print(term)
-                expand_term(0,term)
-            
-            print(set(expanded_terms))
+                expand_term(0, term)
+
+            set(expanded_terms)
+            # print(expanded_terms)
 
         #
         # create a truth table from the derived boolean expression
@@ -178,41 +182,40 @@ def parse_file(filename):
             def cleanbin(num):
                 numstr = str(num).split('0b')[1]
                 zfill = ""
-                for _ in range(ninputs-len(numstr)):
+                for _ in range(circuit['ninputs']-len(numstr)):
                     zfill += '0'
                 return zfill + numstr
             
-            for i in range(2**ninputs):
+            for i in range(2**circuit['ninputs']):
                 b = cleanbin(bin(i))
-                print(b)
 
-    #
-    # truth-table input           
-    #
-        if '.tt' in line or tt_true:
-            binary_io = []  ## List with element[0]=input binary, element[1] = output binaryS
-            for b in line.split(" "):
-                if b != '':
-                    binary_io.append(b)
+                if truth_table.get(b, -1) == -1:
+                    truth_table[b] = ''
 
-            for i, val in enumerate(binary_io[1].strip()):
+                if b in expanded_terms:
+                    truth_table[b] += '1'
+                    circuit['marked_terms'].append(('1', exp_counter, b))
+                else:
+                    truth_table[b] += '0'
+                    circuit['marked_terms'].append(('0', exp_counter, b))
+            exp_counter += 1
+            
+    for k,v in truth_table.items():
+        print(k,v)
+    
+    circuit['marked_terms'].sort()
+    for e in circuit['marked_terms']:
+        print(e)
 
-                if outputs[i] not in circuit:
-                    ## Add new entry in dictionary 
-                    circuit[outputs[i]] = [0] * 2**ninputs # initialize as array of zeros
-                
-                circuit[outputs[i]][int(binary_io[0].strip(), 2)] = val
-
-
-
-    return boolean_expressions, circuit
+    return circuit
 
 
 
 def parse(filename):
-    boolean_expressions, output_dict = parse_file(filename)
-    # print(output_dict)
+    circuit = parse_file(filename)
+    # print(circuit)
     # print(boolean_expressions)
+
 parse('tests/adder.pla')
 
 # expand_term(0,'-0-')
