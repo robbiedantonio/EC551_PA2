@@ -3,4 +3,5 @@
 .vi A bBb C iN
 .vo X Y
 .sop A'*C A*bBb'*C bBb*C A*A' A*iN' 
+.sop A'*A bBb*bBb' C'*C' iN*iN
 .e

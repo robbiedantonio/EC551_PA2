@@ -1,8 +1,4 @@
-
 def getTerms():
-    global inputs
-    global outputs
-    global terms
     '''
     input:
         inputs: dict
@@ -26,10 +22,6 @@ def getTerms():
     
 # get the minterms
 def operations(operation, inverse=False):
-    global inputs
-    global outputs
-    global terms
-
     iterms = inputs['terms']
     oterms = outputs['terms']
     title = "\n"
