@@ -5,7 +5,7 @@ ENG EC551
 Professor Densmore
 '''
 
-def to_SOP(b_strings, terms):
+def to_SOP(b_strings, iterms):
     '''
     A function to convert a list of binary strings of form ['10-1', 1-0-,...] to 
     proper SOP form ab'd + ac' + ...
@@ -27,10 +27,13 @@ def invert_onehot(onehot_list):
     '''
     A function to flip all the bits in a one-hot list
     '''
+    invlist = ['0'] * len(onehot_list)
 
-    x = ~int(''.join(onehot_list),2)
-    print('inv', x)
-    return x
+    for i in range(len(onehot_list)):
+        if onehot_list[i] == '0':
+            invlist[i] = '1'
+
+    return invlist
 
 
 
@@ -68,7 +71,7 @@ def to_onehot(ninputs, sop_string):
     max_value = max(values)
 
     # Step 3: Create a one-hot vector
-    onehot = [0] * (2**ninputs)
+    onehot = ['0'] * (2**ninputs)
     for val in values:  
         onehot[val] = str(1)
     # print(onehot)

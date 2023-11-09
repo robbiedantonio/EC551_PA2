@@ -7,8 +7,7 @@ Professor Densmore
 
 import numpy as np
 
-from utilities import to_onehot
-from utilities import invert_onehot
+from utilities import *
 
 
 def mt_compare (min1, min2):
@@ -98,7 +97,6 @@ def find_PIs (ninputs, minterms_onehot):
         prime_implicants: A list of the expression's prime implicants
         pi_count: Number of prime implicants
     '''
-    print(ninputs, minterms_onehot)
     num_inputs = ninputs
 
     # List of prime implicants
@@ -110,6 +108,7 @@ def find_PIs (ninputs, minterms_onehot):
     ## Step 1: Initial Grouping - place minterms with same number of '1' bits in the same group
     groups[0] = {} # group dictionary
 
+    # print(ninputs, minterms_onehot)
     for minterm in range(len(minterms_onehot)):
         if minterms_onehot[minterm] == '1':
             num_bits = bin(minterm).count('1')
@@ -186,7 +185,7 @@ def find_single_min (ninputs, minterms_onehot):
         for minterm in range(len(minterms_onehot)):
 
             if minterms_onehot[minterm] == '1':
-                if is_covered (pi, minterm, num_inputs):
+                if is_covered (num_inputs, pi, minterm):
                     if pi not in pi_dict:
                         pi_dict[pi] = [bin(minterm)[2:].zfill(num_inputs)]  # Create new group
                     else:
@@ -242,9 +241,9 @@ def minimize_SOP (circuit):
     minimized_dict = {}
 
     for op, op_list in circuit['output_vector'].items():
-        print(op, op_list)
-        minimized_dict[op] = ( find_single_min(circuit['ninputs'], to_onehot(circuit['ninputs'], ",".join(op_list)) ))[0]
-        
+        minimized_exp = ( find_single_min(circuit['ninputs'], to_onehot(circuit['ninputs'], ",".join(op_list)) ))[0]
+        minimized_dict[op] = to_SOP(minimized_exp, circuit['inputs'])
+
     return minimized_dict
 
 def minimize_POS (circuit):
@@ -261,8 +260,8 @@ def minimize_POS (circuit):
 
     for op, op_list in circuit['output_vector'].items():
         inverted_list = invert_onehot(to_onehot(circuit['ninputs'], ",".join(op_list)))
-        print('inv', inverted_list)
-        minimized_dict[op] = (find_single_min(circuit['ninputs'], inverted_list))[0]
+        minimized_exp = (find_single_min(circuit['ninputs'], inverted_list))[0]
+        minimized_dict[op] = to_POS(minimized_exp, circuit['inputs'])
 
     return minimized_dict
 
