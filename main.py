@@ -9,6 +9,7 @@ from pla_parser import *
 from canonicals import *
 from minimize import *
 from utilities import *
+from getDelaySOP import *
 
 
 filename = 'tests/test.pla'
@@ -34,8 +35,6 @@ print('\n')
 for ovar, oexp in minimized_SOP_dict.items():
 	print(ovar,oexp)
 
-print('\n')
-
 for ovar, oexp in minimized_POS_dict.items():
 	print(ovar,oexp)
 
@@ -60,6 +59,8 @@ for ovar, oexp in minimized_POS_dict.items():
 # 	print(op,':', to_POS(minimized_POS_dict[op], input_names))
 
 
+for op, op_list in output_dict.items():
+	print(op,':', getDelaySOP(minimized_SOP_dict[op]), input_names)
 
 
 
