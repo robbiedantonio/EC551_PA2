@@ -3,9 +3,10 @@ from canonicals import *
 from canonicals_inverse import *
 from minimize import *
 from utilities import *
+from getDelaySOP import *
 
 
-filename = 'tests/adder2bit.pla'
+filename = 'tests/adder.pla'
 
 
 
@@ -20,6 +21,7 @@ canonSOP_inv_dict = canonical_SOP_inverse(num_inputs, output_dict)
 canonPOS_inv_dict = canonical_POS_inverse(num_inputs, output_dict)
 minimized_SOP_dict = minimize_SOP(output_dict)
 minimized_POS_dict = minimize_POS(output_dict)
+
 
 
 for op, op_list in output_dict.items():
@@ -51,6 +53,8 @@ for op, op_list in output_dict.items():
 	print(op,':', to_POS(minimized_POS_dict[op], input_names))
 
 
+for op, op_list in output_dict.items():
+	print(op,':', getDelaySOP(minimized_SOP_dict[op]), input_names)
 
 
 
