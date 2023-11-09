@@ -24,22 +24,20 @@ canonical_POS 	= canonicals(circuit, 'POS', False)
 canonical_SOP_I = canonicals(circuit, 'SOP', True)
 canonical_POS_I = canonicals(circuit, 'POS', True)
 
-minimized_SOP_dict = minimize_SOP(circuit)
-minimized_POS_dict = minimize_POS(circuit)
+minimized_SOP_dict, pi_count, epi_count = minimize_SOP(circuit)
+minimized_POS_dict, pi_count, epi_count = minimize_POS(circuit)
 
-print(minimized_SOP_dict)
-print(minimized_POS_dict)
+print(canonical_SOP['expressions'])
+print(canonical_SOP['one_hot'])
 
-# print(canonical_SOP['expressions'])
-# print(canonical_SOP['one_hot'])
+print('\n')
+for ovar, oexp in minimized_SOP_dict.items():
+	print(ovar,oexp)
 
-# for op, op_list in circuit.items():
-# 	print(op,':', to_SOP(circuit[op], input_names))
+print('\n')
 
-# print('\n')
-
-# for op, op_list in output_dict.items():
-# 	print(op,':', to_POS(canonPOS_dict[op], input_names))
+for ovar, oexp in minimized_POS_dict.items():
+	print(ovar,oexp)
 
 # print('\n')
 

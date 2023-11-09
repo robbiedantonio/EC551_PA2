@@ -225,7 +225,7 @@ def find_single_min (ninputs, minterms_onehot):
     minimized_function = list(pi_dict)
     epi_count = len(epi_list)
 
-    return minimized_function, epi_count
+    return minimized_function, pi_count, epi_count
 
 
 def minimize_SOP (circuit):
@@ -241,10 +241,10 @@ def minimize_SOP (circuit):
     minimized_dict = {}
 
     for op, op_list in circuit['output_vector'].items():
-        minimized_exp = ( find_single_min(circuit['ninputs'], to_onehot(circuit['ninputs'], ",".join(op_list)) ))[0]
+        minimized_exp, pi_count, epi_count = ( find_single_min(circuit['ninputs'], to_onehot(circuit['ninputs'], ",".join(op_list)) ))
         minimized_dict[op] = to_SOP(minimized_exp, circuit['inputs'])
 
-    return minimized_dict
+    return minimized_dict, pi_count, epi_count
 
 def minimize_POS (circuit):
     '''
@@ -260,10 +260,10 @@ def minimize_POS (circuit):
 
     for op, op_list in circuit['output_vector'].items():
         inverted_list = invert_onehot(to_onehot(circuit['ninputs'], ",".join(op_list)))
-        minimized_exp = (find_single_min(circuit['ninputs'], inverted_list))[0]
+        minimized_exp, pi_count, epi_count = (find_single_min(circuit['ninputs'], inverted_list))
         minimized_dict[op] = to_POS(minimized_exp, circuit['inputs'])
 
-    return minimized_dict
+    return minimized_dict, pi_count, epi_count
 
 
 
