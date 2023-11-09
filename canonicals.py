@@ -1,66 +1,82 @@
+'''
+Copyright 2023 Robbie Dantonio & Muhammed Abdalla
+Fall 2023 
+ENG EC551
+Professor Densmore
+'''
 
 
-def canonical_SOP(num_inputs, output_dict):
+def canonicals(circuit, operation, inverse=False):
+    iterms = circuit['inputs']
+    oterms = circuit['outputs']
+    title = "\n"
+
+    op = "*+"
+    if operation == "SOP":
+        title += "CANONICAL SUM OF PRODUCTS"
+    elif operation == "POS":
+        op = "+*"
+        title += "CANONICAL PRODUCT OF SUMS"
+    
     '''
-    A funciton to return a circuit design as a canonical Sum-of-products
-
-    Inputs:
-        output_dict: A dictionary, containing output names as the keys and one-hot vectors as the values
-        num_inputs: Number of inputs to the funciton
-
-    Return:
-        canonSOP_dict: a dictionary
-            keys: each element of output_names (names of each output) is a key
-            values: a list of binary strings, which make up the canonical SOP expression
-
+    SOP noInv   -> 1' *+
+    POS noInv   -> 0's +*
+    SOP Inv     -> 0's *+
+    POS Inv     -> 1's +*
     '''
+    
+    if inverse:
+        title += " INVERSE"
 
-    canonSOP_dict = {}
+    print(title)
 
-    for output_name, output_list_onehot in output_dict.items():
-        canonSOP_dict[output_name] = []
+    numberNotation = []
+    expressions = []
+    for i in range(circuit['noutputs']):
+        expressions.append([])
+        numberNotation.append([])
 
-        for idx, minterm in enumerate(output_list_onehot):
-            
-            if int(minterm) == 1:
-                minterm_binary = bin(idx)[2:].zfill(num_inputs)    ## Convert list index to binary
-                
-                canonSOP_dict[output_name].append(minterm_binary)
+    for v in circuit['marked_terms']:
+        func, outputBitIndex, binary = v
+        term = []
+        for j, bit in enumerate(binary):
+            # if the tuple contains a minterm, and the operation is SOP then
+            # concat ' for OFF and normal for ON
+            # else if the tuple contains a MAXTERM and the operation is POS then
+            # concat ' for ON and normally for OFF
+            if func == '1':
+                if not inverse and operation == "SOP" or inverse and operation == "POS":
+                    if bit == '0':
+                        term.append(iterms[j]+'\'')
+                    elif bit == '1':
+                        term.append(iterms[j])
+            elif func == '0':
+                if inverse and operation == "SOP" or not inverse and operation == "POS":
+                    if bit == '1':
+                        term.append(iterms[j]+'\'')
+                    elif bit == '0':
+                        term.append(iterms[j])
+        
+        if term == []:
+            continue
+        
+        t = "("+op[0].join(term)+")"
+        numberNotation[outputBitIndex].append(str(int(binary)))
+        expressions[outputBitIndex].append(t)
+        # print(func, outputBitIndex, binary)
+        # print(outputBitIndex, expressions[outputBitIndex])
 
+    for i,expression in enumerate(expressions):
+        expressions[i] = oterms[i]+"="+op[1].join(expression)
 
-    return canonSOP_dict
+    for i,num in enumerate(numberNotation):
+        notation = "Sigma" if operation == "SOP" else "PI"
+        numberNotation[i] = "{}(".format(notation)+",".join(num)+")"
 
+    for e,n in zip(expressions,numberNotation):
+        print(e,n)
+    print('\n')
 
-
-
-def canonical_POS(num_inputs, output_dict):
-    '''
-    A funciton to return a circuit design as a canonical product of sums
-
-    Inputs:
-        output_dict: A dictionary, containing output names as the keys and one-hot vectors as the values
-        num_inputs: Number of inputs to the funciton
-
-    Return:
-        canonPOS_dict: a dictionary
-            keys: each element of output_names (names of each output) is a key
-            values: a list of binary strings, which make up the canonical SOP expression
-
-    '''
-
-    canonPOS_dict = {}
-
-    for output_name, output_list_onehot in output_dict.items():
-        canonPOS_dict[output_name] = []
-
-        for idx, minterm in enumerate(output_list_onehot):
-            
-            if int(minterm) == 0:
-                minterm_binary = bin(idx)[2:].zfill(num_inputs)    ## Convert list index to binary
-                
-                canonPOS_dict[output_name].append(minterm_binary)
-
-
-    return canonPOS_dict
-
-
+    print(expressions, numberNotation)
+    # each expression and notation are big-edian bit index of the output
+    return {'expressions':expressions, 'one_hot':numberNotation}

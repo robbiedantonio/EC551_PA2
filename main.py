@@ -1,6 +1,12 @@
-from parser import *
+'''
+Copyright 2023 Robbie Dantonio & Muhammed Abdalla
+Fall 2023 
+ENG EC551
+Professor Densmore
+'''
+
+from pla_parser import *
 from canonicals import *
-from canonicals_inverse import *
 from minimize import *
 from utilities import *
 from getDelaySOP import *
@@ -12,45 +18,52 @@ filename = 'tests/adder.pla'
 
 ## Parse filename
 ## if (filename)
-num_inputs, num_outputs, input_names, output_names, output_dict = parse(filename)
+circuit = parse(filename)
+# print(circuit)
+canonical_SOP 	= canonicals(circuit, 'SOP', False)
+canonical_POS 	= canonicals(circuit, 'POS', False)
+canonical_SOP_I = canonicals(circuit, 'SOP', True)
+canonical_POS_I = canonicals(circuit, 'POS', True)
 
+minimized_SOP_dict = minimize_SOP(circuit)
+minimized_POS_dict = minimize_POS(circuit)
 
-canonSOP_dict = canonical_SOP(num_inputs, output_dict)
-canonPOS_dict = canonical_POS(num_inputs, output_dict)
-canonSOP_inv_dict = canonical_SOP_inverse(num_inputs, output_dict)
-canonPOS_inv_dict = canonical_POS_inverse(num_inputs, output_dict)
-minimized_SOP_dict = minimize_SOP(output_dict)
-minimized_POS_dict = minimize_POS(output_dict)
+# print(canonical_SOP['expressions'])
+# print(canonical_SOP['one_hot'])
 
+# for op, op_list in circuit.items():
+# 	print(op,':', to_SOP(circuit[op], input_names))
 
+<<<<<<< HEAD
 
 for op, op_list in output_dict.items():
 	print(op,':', to_SOP(canonSOP_dict[op], input_names))
+=======
+# print('\n')
+>>>>>>> 1aff22ba8d7ed438e9390f48ecb53b4ad6f79929
 
-print('\n')
+# for op, op_list in output_dict.items():
+# 	print(op,':', to_POS(canonPOS_dict[op], input_names))
 
-for op, op_list in output_dict.items():
-	print(op,':', to_POS(canonPOS_dict[op], input_names))
+# print('\n')
 
-print('\n')
+# for op, op_list in output_dict.items():
+# 	print(op,':', to_SOP(canonSOP_inv_dict[op], input_names))
 
-for op, op_list in output_dict.items():
-	print(op,':', to_SOP(canonSOP_inv_dict[op], input_names))
+# print('\n')
 
-print('\n')
+# for op, op_list in output_dict.items():
+# 	print(op,':', to_POS(canonPOS_inv_dict[op], input_names))
 
-for op, op_list in output_dict.items():
-	print(op,':', to_POS(canonPOS_inv_dict[op], input_names))
+# print('\n')
 
-print('\n')
+# for op, op_list in output_dict.items():
+# 	print(op,':', to_SOP(minimized_SOP_dict[op], input_names))
 
-for op, op_list in output_dict.items():
-	print(op,':', to_SOP(minimized_SOP_dict[op], input_names))
+# print('\n')
 
-print('\n')
-
-for op, op_list in output_dict.items():
-	print(op,':', to_POS(minimized_POS_dict[op], input_names))
+# for op, op_list in output_dict.items():
+# 	print(op,':', to_POS(minimized_POS_dict[op], input_names))
 
 
 for op, op_list in output_dict.items():

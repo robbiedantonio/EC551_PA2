@@ -1,8 +1,4 @@
-
 def getTerms():
-    global inputs
-    global outputs
-    global terms
     '''
     input:
         inputs: dict
@@ -20,16 +16,16 @@ def getTerms():
     for i, bits in enumerate(outputs['binary']):
         for j, bit in enumerate(bits): 
             # print(i, j, bit, bits)
+            '''
+            0101
+            
+            '''
             terms.append((bit, j, i, inputs['binary'][i]))
     print(terms)
 
     
 # get the minterms
 def operations(operation, inverse=False):
-    global inputs
-    global outputs
-    global terms
-
     iterms = inputs['terms']
     oterms = outputs['terms']
     title = "\n"
