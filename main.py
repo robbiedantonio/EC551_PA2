@@ -31,14 +31,19 @@ minimized_POS_dict, pi_count, epi_count = minimize_POS(circuit)
 print(canonical_SOP['expressions'])
 print(canonical_SOP['one_hot'])
 
-print('\n')
+print("\nMINIMIZED SUM OF PRODUCT")
 for ovar, oexp in minimized_SOP_dict.items():
 	print(ovar,oexp)
+print('\n')
 
+
+print("\nMINIMIZED PRODUCT OF SUM")
 for ovar, oexp in minimized_POS_dict.items():
 	print(ovar,oexp)
+print('\n')
 
-# print('\n')
+
+
 
 # for op, op_list in output_dict.items():
 # 	print(op,':', to_SOP(canonSOP_inv_dict[op], input_names))
