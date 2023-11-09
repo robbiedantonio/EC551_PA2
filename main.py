@@ -11,7 +11,7 @@ from minimize import *
 from utilities import *
 
 
-filename = 'tests/adder.pla'
+filename = 'tests/test.pla'
 
 
 
@@ -26,6 +26,9 @@ canonical_POS_I = canonicals(circuit, 'POS', True)
 
 minimized_SOP_dict = minimize_SOP(circuit)
 minimized_POS_dict = minimize_POS(circuit)
+
+print(minimized_SOP_dict)
+print(minimized_POS_dict)
 
 # print(canonical_SOP['expressions'])
 # print(canonical_SOP['one_hot'])

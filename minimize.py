@@ -7,6 +7,7 @@ Professor Densmore
 
 import numpy as np
 
+from utilities import to_onehot
 from utilities import invert_onehot
 
 
@@ -97,7 +98,7 @@ def find_PIs (ninputs, minterms_onehot):
         prime_implicants: A list of the expression's prime implicants
         pi_count: Number of prime implicants
     '''
-
+    print(ninputs, minterms_onehot)
     num_inputs = ninputs
 
     # List of prime implicants
@@ -176,8 +177,8 @@ def find_single_min (ninputs, minterms_onehot):
     num_inputs = ninputs
 
     ## Step 1: Find prime implicants
-    prime_implicants, pi_count = find_PIs(minterms_onehot, num_inputs)
-
+    prime_implicants, pi_count = find_PIs(num_inputs, minterms_onehot)
+    
     ## Step 2: For each prime implicant, create a list of minterms for which it represents
     pi_dict = {}    #format {pi1:[mt1, mt2, ...], pi2:[mt2, mt7, ...], ...}
 
@@ -240,9 +241,10 @@ def minimize_SOP (circuit):
     '''
     minimized_dict = {}
 
-    for op, op_list in circuit.items():
-        minimized_dict[op] = (find_single_min(circuit['ninputs'], op_list))[0]
-
+    for op, op_list in circuit['output_vector'].items():
+        print(op, op_list)
+        minimized_dict[op] = ( find_single_min(circuit['ninputs'], to_onehot(circuit['ninputs'], ",".join(op_list)) ))[0]
+        
     return minimized_dict
 
 def minimize_POS (circuit):
@@ -257,8 +259,9 @@ def minimize_POS (circuit):
     '''
     minimized_dict = {}
 
-    for op, op_list in circuit.items():
-        inverted_list = invert_onehot(op_list)
+    for op, op_list in circuit['output_vector'].items():
+        inverted_list = invert_onehot(to_onehot(circuit['ninputs'], ",".join(op_list)))
+        print('inv', inverted_list)
         minimized_dict[op] = (find_single_min(circuit['ninputs'], inverted_list))[0]
 
     return minimized_dict

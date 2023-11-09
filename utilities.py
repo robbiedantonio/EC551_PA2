@@ -27,13 +27,10 @@ def invert_onehot(onehot_list):
     '''
     A function to flip all the bits in a one-hot list
     '''
-    newlist = [0] * len(onehot_list)
-    
-    for i in range(len(onehot_list)):
-        if onehot_list[i] == '0':
-            newlist[i] = '1'
 
-    return newlist
+    x = ~int(''.join(onehot_list),2)
+    print('inv', x)
+    return x
 
 
 
@@ -62,7 +59,7 @@ def to_POS(b_strings, terms):
 
 
 
-def to_onehot(sop_string):
+def to_onehot(ninputs, sop_string):
     '''
     Converts SOP minterm expression of form (1,3,6,7) to onehot vector
     '''
@@ -71,9 +68,10 @@ def to_onehot(sop_string):
     max_value = max(values)
 
     # Step 3: Create a one-hot vector
-    onehot = [0] * (max_value + 1)
-    for val in values:
-        onehot[val] = 1
+    onehot = [0] * (2**ninputs)
+    for val in values:  
+        onehot[val] = str(1)
+    # print(onehot)
 
     return onehot
 
