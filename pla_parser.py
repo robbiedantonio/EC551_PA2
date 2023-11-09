@@ -1,4 +1,9 @@
-
+'''
+Copyright 2023 Robbie Dantonio & Muhammed Abdalla
+Fall 2023 
+ENG EC551
+Professor Densmore
+'''
 
 # global behaves like a static vector, easier than cascade returning
 expanded_terms = []
@@ -115,9 +120,9 @@ def parse_file(filename):
         'outputs':[],
 
         'boolean_expressions':[],
-        'marked_terms':[]
+        'marked_terms':[],
+        'truth_table':{}
     }
-    truth_table = {}
 
     exp_counter = 0
 
@@ -189,23 +194,23 @@ def parse_file(filename):
             for i in range(2**circuit['ninputs']):
                 b = cleanbin(bin(i))
 
-                if truth_table.get(b, -1) == -1:
-                    truth_table[b] = ''
+                if circuit['truth_table'].get(b, -1) == -1:
+                    circuit['truth_table'][b] = ''
 
                 if b in expanded_terms:
-                    truth_table[b] += '1'
+                    circuit['truth_table'][b] += '1'
                     circuit['marked_terms'].append(('1', exp_counter, b))
                 else:
-                    truth_table[b] += '0'
+                    circuit['truth_table'][b] += '0'
                     circuit['marked_terms'].append(('0', exp_counter, b))
             exp_counter += 1
             
-    for k,v in truth_table.items():
-        print(k,v)
+    # for k,v in circuit['truth_table'].items():
+    #     print(k,v)
     
-    circuit['marked_terms'].sort()
-    for e in circuit['marked_terms']:
-        print(e)
+    # circuit['marked_terms'].sort()
+    # for e in circuit['marked_terms']:
+    #     print(e)
 
     return circuit
 
@@ -213,11 +218,16 @@ def parse_file(filename):
 
 def parse(filename):
     circuit = parse_file(filename)
-    # print(circuit)
+    # for key in circuit.keys():
+    #     print(circuit[key])
     # print(boolean_expressions)
 
-parse('tests/adder.pla')
+    return circuit
 
-# expand_term(0,'-0-')
+
+if __name__ == "__main__":
+    # parse('tests/adder.pla')
+    # expand_term(0,'-0-')
+    pass
 
 

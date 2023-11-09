@@ -1,6 +1,14 @@
-def canonicals(inputs, outputs, terms, operation, inverse=False):
-    iterms = inputs['terms']
-    oterms = outputs['terms']
+'''
+Copyright 2023 Robbie Dantonio & Muhammed Abdalla
+Fall 2023 
+ENG EC551
+Professor Densmore
+'''
+
+
+def canonicals(circuit, operation, inverse=False):
+    iterms = circuit['inputs']
+    oterms = circuit['outputs']
     title = "\n"
 
     op = "*+"
@@ -24,12 +32,12 @@ def canonicals(inputs, outputs, terms, operation, inverse=False):
 
     numberNotation = []
     expressions = []
-    for i in range(outputs['num']):
+    for i in range(circuit['noutputs']):
         expressions.append([])
         numberNotation.append([])
 
-    for v in terms:
-        func, outputBitIndex, num, binary = v
+    for v in circuit['marked_terms']:
+        func, outputBitIndex, binary = v
         term = []
         for j, bit in enumerate(binary):
             # if the tuple contains a minterm, and the operation is SOP then
@@ -53,7 +61,7 @@ def canonicals(inputs, outputs, terms, operation, inverse=False):
             continue
         
         t = "("+op[0].join(term)+")"
-        numberNotation[outputBitIndex].append(str(num))
+        numberNotation[outputBitIndex].append(str(int(binary)))
         expressions[outputBitIndex].append(t)
         # print(func, outputBitIndex, binary)
         # print(outputBitIndex, expressions[outputBitIndex])
@@ -69,5 +77,6 @@ def canonicals(inputs, outputs, terms, operation, inverse=False):
         print(e,n)
     print('\n')
 
+    print(expressions, numberNotation)
     # each expression and notation are big-edian bit index of the output
-    return expressions, numberNotation
+    return {'expressions':expressions, 'one_hot':numberNotation}

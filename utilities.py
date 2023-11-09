@@ -1,3 +1,9 @@
+'''
+Copyright 2023 Robbie Dantonio & Muhammed Abdalla
+Fall 2023 
+ENG EC551
+Professor Densmore
+'''
 
 def to_SOP(b_strings, terms):
     '''

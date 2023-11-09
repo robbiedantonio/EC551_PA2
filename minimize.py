@@ -1,5 +1,11 @@
+'''
+Copyright 2023 Robbie Dantonio & Muhammed Abdalla
+Fall 2023 
+ENG EC551
+Professor Densmore
+'''
+
 import numpy as np
-import math
 
 from utilities import invert_onehot
 
@@ -42,7 +48,7 @@ def mt_merge (min1, min2, idx):
     return min1[:idx] + '-' + min1[idx + 1:]
 
 
-def is_covered (pi, minterm, num_inputs):
+def is_covered (ninputs, pi, minterm):
     '''
     A function to check if a prime implicant pi covers a minterm. Returns True/False
 
@@ -54,7 +60,7 @@ def is_covered (pi, minterm, num_inputs):
         True if pi covers the minterm
     '''
     ## Convert minterm to string
-    mt_str = bin(minterm)[2:].zfill(num_inputs)
+    mt_str = bin(minterm)[2:].zfill(ninputs)
 
     for i in range(len(mt_str)):
         if mt_str[i] != pi[i] and pi[i] != '-':
@@ -81,7 +87,7 @@ def is_represented(pi, minterm, pi_dict):
     return False
 
 
-def find_PIs (minterms_onehot, num_inputs = None):
+def find_PIs (ninputs, minterms_onehot):
     '''
     A function to find the prime implicants of a boolean expression
 
@@ -92,9 +98,7 @@ def find_PIs (minterms_onehot, num_inputs = None):
         pi_count: Number of prime implicants
     '''
 
-    if num_inputs is None:
-        # Calculate number of inputs if it wasn't provided
-        num_inputs = int(math.ceil(math.log2(len(minterms_onehot))))
+    num_inputs = ninputs
 
     # List of prime implicants
     prime_implicants = []
@@ -158,7 +162,7 @@ def find_PIs (minterms_onehot, num_inputs = None):
 
  
 
-def find_single_min (minterms_onehot):
+def find_single_min (ninputs, minterms_onehot):
     '''
     A function to find the mininized SOP/POS representation of a boolean expression using Quine McCluskey algorithm
 
@@ -169,7 +173,7 @@ def find_single_min (minterms_onehot):
         epi_count: number of essential prime implicants
     '''
 
-    num_inputs = int(math.ceil(math.log2(len(minterms_onehot))))    
+    num_inputs = ninputs
 
     ## Step 1: Find prime implicants
     prime_implicants, pi_count = find_PIs(minterms_onehot, num_inputs)
@@ -224,7 +228,7 @@ def find_single_min (minterms_onehot):
     return minimized_function, epi_count
 
 
-def minimize_SOP (output_dict):
+def minimize_SOP (circuit):
     '''
     A function to find the mininized SOP representation of multiple boolean expressions using Quine McCluskey algorithm
 
@@ -236,12 +240,12 @@ def minimize_SOP (output_dict):
     '''
     minimized_dict = {}
 
-    for op, op_list in output_dict.items():
-        minimized_dict[op] = (find_single_min(op_list))[0]
+    for op, op_list in circuit.items():
+        minimized_dict[op] = (find_single_min(circuit['ninputs'], op_list))[0]
 
     return minimized_dict
 
-def minimize_POS (output_dict):
+def minimize_POS (circuit):
     '''
     A function to find the mininized POS representation of multiple boolean expressions using Quine McCluskey algorithm
 
@@ -253,9 +257,9 @@ def minimize_POS (output_dict):
     '''
     minimized_dict = {}
 
-    for op, op_list in output_dict.items():
+    for op, op_list in circuit.items():
         inverted_list = invert_onehot(op_list)
-        minimized_dict[op] = (find_single_min(inverted_list))[0]
+        minimized_dict[op] = (find_single_min(circuit['ninputs'], inverted_list))[0]
 
     return minimized_dict
 
