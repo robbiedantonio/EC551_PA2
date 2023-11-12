@@ -34,13 +34,10 @@ minimized_POS_dict = minimize_POS(circuit)
 # for op, op_list in circuit.items():
 # 	print(op,':', to_SOP(circuit[op], input_names))
 
-<<<<<<< HEAD
 
 for op, op_list in output_dict.items():
 	print(op,':', to_SOP(canonSOP_dict[op], input_names))
-=======
 # print('\n')
->>>>>>> 1aff22ba8d7ed438e9390f48ecb53b4ad6f79929
 
 # for op, op_list in output_dict.items():
 # 	print(op,':', to_POS(canonPOS_dict[op], input_names))
