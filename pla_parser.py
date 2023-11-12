@@ -103,25 +103,29 @@ def parse_file(filename):
     Input:
         file: a .pla file
 
-    Return:
-        circuit: a dictionary
-            keys: each element of output_names (names of each output) is a key
-            values: 
-                a one-hot list, where index i is 1 if the i is a minterm and 0 if not
-                numerical values of number of I/O vars
-                truth table
+    output: A dictionary
+        circuit
+            int:            ninputs
+            int:            noutputs
+            string arr:     inputs
+            string arr:     outputs
+            string arr:     boolean_expressions
+            string arr:     marked_terms
+            string dict:    truth_table
+            output_vector:  output dictionary mapping of outputs to inputs
 
     '''
  
     circuit = {
-        'ninputs':-1,
-        'noutputs':-1,
-        'inputs':[],
-        'outputs':[],
+        'ninputs':              -1,
+        'noutputs':             -1,
+        'inputs':               [],
+        'outputs':              [],
 
-        'boolean_expressions':[],
-        'marked_terms':[],
-        'truth_table':{}
+        'boolean_expressions':  [],
+        'marked_terms':         [],
+        'truth_table':          {},
+        'output_vector':        {},
     }
 
     exp_counter = 0
@@ -200,9 +204,16 @@ def parse_file(filename):
                 if b in expanded_terms:
                     circuit['truth_table'][b] += '1'
                     circuit['marked_terms'].append(('1', exp_counter, b))
+
+                    # populate output dictionary
+                    if circuit['output_vector'].get(circuit['outputs'][exp_counter]) == None:
+                        circuit['output_vector'][circuit['outputs'][exp_counter]] = []
+                    circuit['output_vector'][circuit['outputs'][exp_counter]].append(str(i))
+
                 else:
                     circuit['truth_table'][b] += '0'
                     circuit['marked_terms'].append(('0', exp_counter, b))
+                    
             exp_counter += 1
             
     # for k,v in circuit['truth_table'].items():

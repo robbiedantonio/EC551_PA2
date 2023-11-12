@@ -77,6 +77,6 @@ def canonicals(circuit, operation, inverse=False):
         print(e,n)
     print('\n')
 
-    print(expressions, numberNotation)
+    # print(expressions, numberNotation)
     # each expression and notation are big-edian bit index of the output
     return {'expressions':expressions, 'one_hot':numberNotation}

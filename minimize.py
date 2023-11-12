@@ -7,7 +7,7 @@ Professor Densmore
 
 import numpy as np
 
-from utilities import invert_onehot
+from utilities import *
 
 
 def mt_compare (min1, min2):
@@ -97,7 +97,6 @@ def find_PIs (ninputs, minterms_onehot):
         prime_implicants: A list of the expression's prime implicants
         pi_count: Number of prime implicants
     '''
-
     num_inputs = ninputs
 
     # List of prime implicants
@@ -109,6 +108,7 @@ def find_PIs (ninputs, minterms_onehot):
     ## Step 1: Initial Grouping - place minterms with same number of '1' bits in the same group
     groups[0] = {} # group dictionary
 
+    # print(ninputs, minterms_onehot)
     for minterm in range(len(minterms_onehot)):
         if minterms_onehot[minterm] == '1':
             num_bits = bin(minterm).count('1')
@@ -176,8 +176,8 @@ def find_single_min (ninputs, minterms_onehot):
     num_inputs = ninputs
 
     ## Step 1: Find prime implicants
-    prime_implicants, pi_count = find_PIs(minterms_onehot, num_inputs)
-
+    prime_implicants, pi_count = find_PIs(num_inputs, minterms_onehot)
+    
     ## Step 2: For each prime implicant, create a list of minterms for which it represents
     pi_dict = {}    #format {pi1:[mt1, mt2, ...], pi2:[mt2, mt7, ...], ...}
 
@@ -185,7 +185,7 @@ def find_single_min (ninputs, minterms_onehot):
         for minterm in range(len(minterms_onehot)):
 
             if minterms_onehot[minterm] == '1':
-                if is_covered (pi, minterm, num_inputs):
+                if is_covered (num_inputs, pi, minterm):
                     if pi not in pi_dict:
                         pi_dict[pi] = [bin(minterm)[2:].zfill(num_inputs)]  # Create new group
                     else:
@@ -225,7 +225,7 @@ def find_single_min (ninputs, minterms_onehot):
     minimized_function = list(pi_dict)
     epi_count = len(epi_list)
 
-    return minimized_function, epi_count
+    return minimized_function, pi_count, epi_count
 
 
 def minimize_SOP (circuit):
@@ -240,10 +240,11 @@ def minimize_SOP (circuit):
     '''
     minimized_dict = {}
 
-    for op, op_list in circuit.items():
-        minimized_dict[op] = (find_single_min(circuit['ninputs'], op_list))[0]
+    for op, op_list in circuit['output_vector'].items():
+        minimized_exp, pi_count, epi_count = ( find_single_min(circuit['ninputs'], to_onehot(circuit['ninputs'], ",".join(op_list)) ))
+        minimized_dict[op] = to_SOP(minimized_exp, circuit['inputs'])
 
-    return minimized_dict
+    return minimized_dict, pi_count, epi_count
 
 def minimize_POS (circuit):
     '''
@@ -257,11 +258,12 @@ def minimize_POS (circuit):
     '''
     minimized_dict = {}
 
-    for op, op_list in circuit.items():
-        inverted_list = invert_onehot(op_list)
-        minimized_dict[op] = (find_single_min(circuit['ninputs'], inverted_list))[0]
+    for op, op_list in circuit['output_vector'].items():
+        inverted_list = invert_onehot(to_onehot(circuit['ninputs'], ",".join(op_list)))
+        minimized_exp, pi_count, epi_count = (find_single_min(circuit['ninputs'], inverted_list))
+        minimized_dict[op] = to_POS(minimized_exp, circuit['inputs'])
 
-    return minimized_dict
+    return minimized_dict, pi_count, epi_count
 
 
 
