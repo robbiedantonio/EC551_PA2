@@ -1,0 +1,30 @@
+EC551 Programming Assignment 2
+Robert D'Antonio and Muhammed Abdalla
+Fall 2023
+
+
+Overall FPGA Architecture:
+	- FPGA is implemented as a graph of LUTs 
+
+
+
+Specific Data Strutures:
+	- LUTs
+		- Each LUT is implemented as an instance of the LUT class
+		- Inside the LUT class 
+
+	- AvailableConnections matrix: numpy array of size (num_luts x num_luts)
+		- Represents the POSSIBLE connections for LUTs (actual connections are handled locally)
+		- The j'th column of the i'th row is 1 if the output of LUT i can be
+		  an input to LUT j. If not, it is 0
+		- Note that this matrix is NOT diagonal. The output of one LUT being connected to the 
+		  input of another does not imply that the ouput of this second LUT is connected to
+		  the input of the first LUT
+	
+	- Connections matrix (Might not implement this)
+		- Represents the ACTUAL connections for LUTs
+		- Current plan is to handle these connections locally (i.e. inside instances of the LUT class)
+			so most likely this redundant representation will get scrapped
+
+
+
