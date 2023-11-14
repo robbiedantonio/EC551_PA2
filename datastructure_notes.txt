@@ -11,7 +11,9 @@ Overall FPGA Architecture:
 Specific Data Strutures:
 	- LUTs
 		- Each LUT is implemented as an instance of the LUT class
-		- Inside the LUT class 
+		- Inside the LUT class there are fields for input names, output name, and function as 
+		  a onehot list
+		- Additionally, fields for LUT ID and number of possible inputs into the LUT
 
 	- AvailableConnections matrix: numpy array of size (num_luts x num_luts)
 		- Represents the POSSIBLE connections for LUTs (actual connections are handled locally)
