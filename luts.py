@@ -26,7 +26,7 @@ class LUT:
 
 
 class FPGA:
-    def __init__(self, num_luts, lut_type, num_inputs, num_outputs, connection_mat=None)
+    def __init__(self, num_luts, lut_type, num_inputs, num_outputs, connection_mat=None):
         self.num_luts = num_luts        # Number of LUTs in this FPGA
         self.lut_type = lut_type        # Type of LUTs (4-input or 6-input)
         self.num_inputs = num_inputs    # Number of inputs on this FPGA
@@ -39,7 +39,7 @@ class FPGA:
             self.connection_mat = self.make_connect_mat()
 
         ## Initialize LUTs
-        self.lut_list = init_LUTs()
+        self.lut_list = self.init_LUTs()
 
     def make_connect_mat(self):
         ## Generates connection matrix for LUTs - assumes that all LUTs are conected
@@ -58,6 +58,7 @@ class FPGA:
         Adds a function to the FPGA
 
         fn_bstring: function in bstring format: ['10-0', '1--0', '1011']
+
         '''
         
         '''
@@ -83,6 +84,26 @@ class FPGA:
         '''
 
         pass
+
+    def printInfo(self):
+        '''
+        Prints general info on FPGA
+        '''
+        print("\033[1mFPGA INFORMATION\033[0m")
+        print(f"Number of LUTs: \033[94m{self.num_luts}\033[0m")
+        print(f"Inputs per LUT: \033[94m{self.lut_type}\033[0m")
+        print(f"Number of Inputs to FPGA: \033[94m{self.num_inputs}\033[0m")
+        print(f"Number of Outputs from FPGA: \033[94m{self.num_outputs}\033[0m")
+        print(f"Possible Connections between LUTs: \n\033[94m{self.connection_mat}\033[0m")
+
+        print("\n\033[1mFPGA LUTS INFORMATION\033[0m")
+        for lut in self.lut_list:
+            print(f"\033[1mLUT ID: {lut.lut_id}\033[0m")
+            print(f"Number of Inputs: \033[94m{lut.lut_type}\033[0m")
+            print(f"Is Available?: \033[94m{lut.is_available}\033[0m")
+            print(f"Input List: \033[94m{lut.input_list}\033[0m")
+            print(f"Output: \033[94m{lut.output}\033[0m")
+            print(f"Mapped Function: \033[94m{lut.function}\033[0m\n")
 
 
 
