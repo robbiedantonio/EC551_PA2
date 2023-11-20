@@ -18,6 +18,7 @@ class LUT:
         function_onehot: one-hot list of length 2**lut_type. The truth table for function
         '''
         self.function = function_onehot
+        self.is_available = False
 
 class FPGA:
     def __init__(self, num_inputs=4, num_outputs=4, num_luts=8, lut_type=4, input_connectionmat=None, lut_connectionmat=None):
@@ -229,11 +230,29 @@ class FPGA:
             return False
 
         ## Map to LUTs
-        for node in mapped_nodes:
-            if node[:3] == 'LUT':
-                idx = int(node[3])
-                self.lut_list[idx].map_function()
+        for fpga_node, fn_node in isos[0].items():
+            if fn_node[:3] == 'LUT':
+                idx = int(fpga_node[3])
+                self.lut_list[idx].map_function(fn_dict[fn_node]['truth_table'])
+    
+    def print_info(self):
+        '''
+        Prints general info on FPGA
+        '''
+        print("\033[1mFPGA INFORMATION\033[0m")
+        print(f"Number of LUTs: \033[94m{self.num_luts}\033[0m")
+        print(f"Inputs per LUT: \033[94m{self.lut_type}\033[0m")
+        print(f"Number of Inputs to FPGA: \033[94m{self.num_inputs}\033[0m")
+        print(f"Number of Outputs from FPGA: \033[94m{self.num_outputs}\033[0m")
+        print(f"Possible Connections between inputs and LUTs/outputs: \n\033[94m{self.input_connectionmat}\033[0m")
+        print(f"Possible Connections between LUTs and other  LUTs/outputs: \n\033[94m{self.lut_connectionmat}\033[0m")
 
+        print("\n\033[1mFPGA LUTS INFORMATION\033[0m")
+        for lut in self.lut_list:
+            print(f"\033[1mLUT ID: {lut.lut_id}\033[0m")
+            print(f"Number of Inputs: \033[94m{lut.lut_type}\033[0m")
+            print(f"Is Available?: \033[94m{lut.is_available}\033[0m")
+            print(f"Mapped Function: \033[94m{lut.function}\033[0m\n")
 
 
 
