@@ -3,7 +3,7 @@ LUTS needs to be placed as well as linking to the buses
 
 '''
 
-def input_to_lut_partition(expression, inputs,numInputLUT):
+def input_to_lut_partition(expression, inputs, numInputLUT):
     '''
         input: 
             string expression   - one hot encoding representing a boolean expression
@@ -26,6 +26,8 @@ def input_to_lut_partition(expression, inputs,numInputLUT):
                 queue.append(inputs[i]+'\'')
             elif literal == '1':
                 queue.append(inputs[i])
+
+        print("queue", queue)
 
         while len(queue) > 0:
             if not LUTs.get('LUT'+str(lutCount), 0):
@@ -61,24 +63,50 @@ def input_to_lut_partition(expression, inputs,numInputLUT):
 
     return LUTs, lutCount 
 
+stack = []
+def topological_sort(adjList, node):
+    global stack
 
+    if adjList.get(node, None) == None:
+        return
+    else:
+        while adjList[node]:
+            child = adjList[node].pop(0)
+
+            if child in stack:
+                continue
+
+            topological_sort(adjList, child)
+            stack.append(child)
+
+        if node not in stack:
+            stack.append(node)
+            
 if __name__ == "__main__":
 
     # testing down here
 
     numLUTs = 8
 
-    inputs1 = ['a', 'b', 'c', 'd', 'e']
+    inputs1 = list('ABCDE')
     inputs2 = ['a', 'b', 'c', 'd']
+    inputs3 = list('ABCDEFG')
 
-    expression1 = '10001 11010 10101 01010, 00010'
+    expression1 = '11--- 1--11 -111- 1-1-1, --111'
     expression2 = '0000 0001 0010 0100 1000 1111'
+    expression3 = '1111111 --11111 11-11-- -11--11'
+
     lut_mapping, lutCount = input_to_lut_partition(expression1, inputs1, 4)
 
     print("\033[1mLUT MAPPING\033[0m")
     print(f"Resources used: \033[94m{lutCount/numLUTs * 100}%\033[0m")
     for k,v in lut_mapping.items():
         print(k,v)
+
+    for k in lut_mapping.keys():
+        topological_sort(lut_mapping, k)
+
+    print(stack)
 
 
 
