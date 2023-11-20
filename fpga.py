@@ -25,6 +25,8 @@ class FPGA:
         self.num_outputs = num_outputs  # Number of outputs on this FPGA
         self.num_luts = num_luts        # Number of LUTs in this FPGA
         self.lut_type = lut_type        # Type of LUTs (4-input or 6-input)
+        self.input_names = {}           # Dictionary to store mappings between input variable names and internal names (IN0, IN1,...)
+        self.output_names = {}          # Dictionary to store mappings between output variable names and internal names (OUT0,...)
 
         ## Initialize input connection matrix
         if input_connectionmat != None:
@@ -41,12 +43,20 @@ class FPGA:
         ## Initialize LUTs
         self.lut_list = self.init_LUTs()
 
+        ## Initialize input_names
+        for i in range(self.num_inputs):
+            self.input_names[f'IN{i}'] = None
+
+        ## Initialize output_names
+        for i in range(self.num_outputs):
+            self.output_names[f'OUT{i}'] = None
+
         ## Initialize FPGA graphs
         self.graph = self.init_graph()          ## Constant graph
         self.availability_graph = self.graph    ## Availability graph - nodes get removed as functions are mapped
 
-        print(self.input_connectionmat)
-        print(self.lut_connectionmat)
+        # print(self.input_connectionmat)
+        # print(self.lut_connectionmat)
 
         # print("Graph nodes:", self.graph.nodes)
         # print("Graph edges:", self.graph.edges)
@@ -81,6 +91,44 @@ class FPGA:
         for lut_id in range(self.num_luts):
             lut_list.append(LUT(lut_id=lut_id, lut_type=self.lut_type))
         return lut_list
+
+    def init_variables(self, input_name_list, output_name_list):
+        '''
+        Define mapping of external names to internal names
+        '''
+        ## Inputs
+        for i in range(len(input_name_list)):
+            self.input_names[f'IN{i}'] = input_name_list[i]
+
+        ## Initialize output_names
+        for i in range(len(output_name_list)):
+            self.output_names[f'OUT{i}'] = output_name_list[i]
+
+    def find_internal_names(self, input_names_list, output_names_list):
+        '''
+        Returns internal names of external variables stored in input_names_list and output_names_list
+        '''
+        ip_list = []
+        op_list = []
+
+        for internal, external in self.input_names.items():
+            if internal is None or external is None:
+                continue
+            for var in input_names_list:
+                if var in external and internal is not None and external is not None:
+                    index = external.index(var)
+                    ip_list.append(internal)
+
+        for internal, external in self.output_names.items():
+            if internal is None or external is None:
+                continue
+            for var in output_names_list:
+                if var in external and internal is not None and external is not None:
+                    index = external.index(var)
+                    op_list.append(internal)
+
+        return ip_list, op_list
+
 
     def init_graph(self):
         '''
@@ -131,26 +179,34 @@ class FPGA:
 
         return graph
 
-    def map_function(self, fn_bstring):
+    def map_function(self, fn_bstring, input_name_list, output_name):
         '''
         Maps a boolean logic expression to the FPGA
 
         fn_bstring: function in bstring format: ['10-0', '1--0', '1011']
         '''
 
-        ## Convert function to graph
-        fn_graph = to_graph(fn_bstring, self.lut_type)
+        # ## Get internal assignments of input variables:
+        # current_ip_variables = []
+        # for variable in input_name_list:
+        #     for internal, external in self.input_names.items():
+        #         if variable == external
+
+        ## Get LUT mappings and graph of function
+
+        ips, ops = self.find_internal_names(input_name_list, [output_name])
+
+        fn_dict, fn_graph = fn_make_packet(fn_bstring, self.lut_type, self.num_inputs, ops[0])
 
         ## Helper function for DiGraphMatcher(), defines when nodes should be considered equal
         def node_match (node1, node2):  
             if node1['type'] == node2['type']:
                 if node1['type'] == 'LUT':
                     return True
-                elif node1['id'] == node2['id']:
+                elif int(node1['id']) == int(node2['id']):
                     return True
             return False
 
-        ## Check if function can be mapped to FPGA - checking if subgraph exists in larger graph
         isos = list(iso.DiGraphMatcher(self.availability_graph, fn_graph,node_match=node_match).subgraph_monomorphisms_iter())
         
         ## Remove mapped LUT and output nodes from availability_graph
@@ -175,7 +231,7 @@ class FPGA:
         ## Map to LUTs
         for node in mapped_nodes:
             if node[:3] == 'LUT':
-                idx = node[4]
+                idx = int(node[3])
                 self.lut_list[idx].map_function()
 
 

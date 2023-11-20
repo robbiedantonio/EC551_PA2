@@ -33,6 +33,17 @@ def tt_onehot (fn_bstring):
 
     return truth_tab_onehot
 
+def tt_and (length):
+    ## Returns truth table for AND gate
+    tt = [0] * (2**length - 1)
+    tt.append(1)
+    return tt
+
+def tt_or (length):
+    ## Returns truth table for OR gate
+    tt = [1] * 2**length
+    tt[0] = 0
+    return tt
 
 def expand_term (bstring_term):
     '''
@@ -74,7 +85,7 @@ def literal_count_term (bstring_term):
 
 
 
-def to_graph (fn_bstring, lut_type):
+def to_graph (lut_assignments, fn_bstring, output_lut, output_name, lut_type):
     '''
     Generates a graph for a boolean logic expression
 
@@ -87,15 +98,20 @@ def to_graph (fn_bstring, lut_type):
     ## Add nodes for inputs
     literal_count, literal_list = literal_count_fn(fn_bstring)
 
+    ## Add nodes/edges for LUTs
     for idx, ip in enumerate(literal_list):
         if ip == 1:
             graph.add_node(f'IN{idx}', type='input', id=idx)
     
-    if literal_count <= lut_type:
-        graph.add_node(f'LUT{0}', type='LUT', id=0)
-        graph.add_node(f'OUT{0}', type='output', id=0)
+    for idx, (lut_name, data) in enumerate(lut_assignments.items()):
+        graph.add_node(lut_name, type='LUT', id=idx)
 
-    # print(input_to_lut_partition(fn_bstring, lut_type=4))
+        for ip in data['inputs']:
+            graph.add_edge(ip, lut_name)
+
+    ## Add node/edges for output
+    graph.add_node(output_name, type='output', id=output_name[3])
+    graph.add_edge(output_lut, output_name)
 
     return graph
 
@@ -112,90 +128,137 @@ def input_to_lut_partition (fn_bstring, lut_type):
         dictionary LUTs     - key value mapping (adjcency list) of primary inputs to LUTs and LUTs to LUTs; covering partitioning
         int lutCount        - number of required number of LUTs for this configuration
     '''
-    print('expression:', fn_bstring)
 
     LUTs = {}
-    queue = []
+    ip_queue = []
+    bstring_queue = []
+    lut_queue = []
+    mt_lut_list = []
     lutCount = 0
+    fn_output_lut = None    ## LUT corresponding to function's output
 
     ## Generate input list
     inputs=[]
-    num_literals = literal_count_fn(fn_bstring)[0]
+    # num_literals = literal_count_fn(fn_bstring)[0]
+    num_literals = len(fn_bstring[0])
     for i in range(num_literals):
         inputs.append(f'IN{i}')
 
 
     for term in fn_bstring:
+        mt_output_lut = None    ## The output of this specific minterm
+
         # decode to primary inputs
         for i, literal in enumerate(term):
             if literal == '0':
-                queue.append(inputs[i]+'\'')
+                ip_queue.append(inputs[i])#+'\'')
+                bstring_queue.append(literal)
             elif literal == '1':
-                queue.append(inputs[i])
+                ip_queue.append(inputs[i])
+                bstring_queue.append(literal)
 
-        print("queue", queue)
+        while len(ip_queue) > 0:
+            if not LUTs.get('LUT'+str(lutCount), 0):
+                LUTs['LUT'+str(lutCount)] = {} 
+                temp_list = []
+                temp_bstring_list=[]
 
+            counter = 0
+            while len(ip_queue) > 0 and counter < lut_type:
+                temp_list.append(ip_queue.pop(0))
+                temp_bstring_list.append(bstring_queue.pop(0))
+
+                counter += 1  
+
+            bstring = [''.join(map(str, temp_bstring_list[:counter]))]
+
+            LUTs['LUT'+str(lutCount)] = {'inputs':temp_list, 'truth_table':tt_onehot(bstring)}
+            lut_queue.append('LUT'+str(lutCount))
+            mt_output_lut = 'LUT'+str(lutCount)
+            fn_output_lut = 'LUT'+str(lutCount)
+
+            if len(ip_queue) > 0:
+                ip_queue.append('LUT'+str(lutCount))
+                bstring_queue.append(1)
+            
+            lutCount += 1
+       
+        mt_lut_list.append(mt_output_lut)  ## Add the LUT representing this particular minterm
+
+    ## OR all the minterms together
+    queue = []
+    bstring_queue = []
+
+    for k in mt_lut_list:
+        queue.append(k)
+    
+    if len(queue) > 1:
         while len(queue) > 0:
             if not LUTs.get('LUT'+str(lutCount), 0):
-                LUTs['LUT'+str(lutCount)] = []
+                LUTs['LUT'+str(lutCount)] = {}
+                temp_list = []
 
             counter = 0
             while len(queue) > 0 and counter < lut_type:
-                LUTs['LUT'+str(lutCount)].append(queue.pop(0)) 
-                counter += 1  
+                temp_list.append(queue.pop(0))
+                counter += 1
+            LUTs['LUT'+str(lutCount)] = {'inputs':temp_list, 'truth_table':tt_or(len(temp_list))}
+            fn_output_lut = 'LUT'+str(lutCount)     ## In case of multiple minterms, this LUT will be output of the function
 
             if len(queue) > 0:
                 queue.append('LUT'+str(lutCount))
-            
+
             lutCount += 1
-    
-    queue = []
-    for k in LUTs.keys():
-        queue.append(k)
-    
-    while len(queue) > 0:
-        if not LUTs.get('LUT'+str(lutCount), 0):
-            LUTs['LUT'+str(lutCount)] = []
 
-        counter = 0
-        while len(queue) > 0 and counter < lut_type:
-            LUTs['LUT'+str(lutCount)].append(queue.pop(0))
-            counter += 1
-
-        if len(queue) > 0:
-            queue.append('LUT'+str(lutCount))
-
-        lutCount += 1
-
-    return LUTs, lutCount 
+    return LUTs, lutCount, fn_output_lut
 
 def split_function(fn_bstring, lut_type):
     '''
     Splits a function fn_bstring so that it can be mapped to FPGA
-    Returns a dictionary
-    {M0: ['0010-', '1--1-']
-     M1: ['--100', '-1010']
-     OUT0: ['---11']
+    
+    Returns a tuple with following data:
+        lut_assignments: a dictionary of dictionaries describing LUT mappings:
+            {LUT0: {inputs=['IN1','IN2'],
+                    truth_table=[0,1,0,0]}.
+             LUT1: {"
+                                        "}
+            }
+        
+        lut_count: number of LUTs reqired for this expression
+        output_lut: which LUT is the output of this expression
     '''
-    print('expression:', fn_bstring)
-
     lut_assignments = {}
 
     ## Get number of literals, and literal list
     literal_count, literal_list = literal_count_fn(fn_bstring)
 
-    ## If function has fewer than lut_type literals
+    # If function has fewer than lut_type literals, generate truth table and return
     if literal_count <= lut_type:
-        lut_assignments['LUT0'] = fn_bstring
-        return lut_assignments
+        lut_assignments['LUT0'] = {'inputs': list_to_inputs(literal_list), 'truth_table': tt_onehot(fn_bstring)}
+        lut_count=1
+        output_lut='LUT0'
+    else:
+        lut_assignments, lut_count, output_lut = input_to_lut_partition(fn_bstring, lut_type)
 
-    for term in fn_bstring:
-        num_lits = literal_count_term(term)
+    return lut_assignments, lut_count, output_lut
 
 
 
+def list_to_inputs(literal_list):
+    '''
+    Converts the one-hot literal_list to a list of input names 
+    Example: [1,1,0,0] -> ['IN0', 'IN1']
+    '''
+    input_names = []
+    for idx, i in enumerate(literal_list):
+        if i == 1:
+            input_names.append(f'IN{idx}')
 
-def fn_make_packet (fn_bstring, lut_type, fpga_num_inputs):
+    return input_names
+
+
+
+def fn_make_packet (fn_bstring, lut_type, fpga_num_inputs, output_name):
     '''
     Master function to convert fn_bstring into mappable function
 
@@ -215,7 +278,13 @@ def fn_make_packet (fn_bstring, lut_type, fpga_num_inputs):
         return False
 
     ## Split function
-    fn_dict = split_function(fn_bstring, lut_type)
+    lut_assignments, lut_count, output_lut = split_function(fn_bstring, lut_type)
+
+    ## Get function graph
+    fn_graph = to_graph(lut_assignments, fn_bstring, output_lut, output_name, lut_type)
+
+    ## Eventually, this should return a tuple of (fn_dict, fn_graph)
+    return lut_assignments, fn_graph
 
 
 
