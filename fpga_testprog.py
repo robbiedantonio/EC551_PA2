@@ -3,18 +3,26 @@ from canonicals import *
 from minimize import *
 from utilities import *
 from getDelaySOP import *
-from luts import *
+from fpga import *
+
+from map_utilities import *
 
 
 
-filename = 'tests/test.pla'
+
+filename = 'tests/test5in.pla'
 circuit = parse(filename)
+
 minimized_SOP_dict, pi_count, epi_count = minimize_SOP(circuit)
 print(minimized_SOP_dict)
 
-fpga = FPGA(num_luts=8, lut_type=4, num_inputs=4, num_outputs=1, connection_mat=None)
+# print(literal_count_fn(minimized_SOP_dict['Z'])[1])
+
+# print(tt_onehot (minimized_SOP_dict['X']))
 
 
-fpga.printInfo()
+fpga = FPGA(num_inputs=4, num_outputs=4, num_luts=8, lut_type=4, input_connectionmat=None, lut_connectionmat=None)
+
+# fpga.printInfo()
 
 
