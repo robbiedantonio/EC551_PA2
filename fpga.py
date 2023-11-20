@@ -127,7 +127,7 @@ class FPGA:
             matched_nodes = matcher.mapping
 
             for node, _ in matched_nodes.items():
-                if node.type == "LUT"
+                if node.type == "LUT":
                     self.lut_list[node.id].is_available = False
                     self.availability_graph.remove_node(node)
                     
