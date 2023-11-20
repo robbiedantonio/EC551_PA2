@@ -1,4 +1,5 @@
 import networkx as nx
+import networkx.algorithms.isomorphism as iso
 import matplotlib.pyplot as plt
 import numpy as np
 from map_utilities import *
@@ -90,133 +91,92 @@ class FPGA:
 
         ## Add input nodes
         for i in range(self.num_inputs):
-            print (f'IN{i} added')
+            # print (f'IN{i} added')
             graph.add_node(f'IN{i}', type="input", id=i)
 
         ## Add output nodes
         for i in range(self.num_outputs):
-            print (f'OUT{i} added')
+            # print (f'OUT{i} added')
             graph.add_node(f'OUT{i}', type="output", id=i)
 
         ## Add LUT nodes
         for i in range(self.num_luts):
-            print(f'LUT{i} added')
+            # print(f'LUT{i} added')
             graph.add_node(f'LUT{i}', type="LUT", id=i)
 
         ## Connect inputs to LUTs and outputs according to input_connectionmat
         for i in range(self.num_inputs):
             for j in range(self.num_luts):
                 if self.input_connectionmat[i][j] == 1:
-                    print(f'adding edge from IN{i} to LUT{j}')
+                    # print(f'adding edge from IN{i} to LUT{j}')
                     graph.add_edge(f'IN{i}', f'LUT{j}')
             for j in (range(self.num_luts, self.num_luts+self.num_outputs)):
                 if self.input_connectionmat[i][j] == 1:
-                    print(f'adding edge from IN{i} to OUT{j-self.num_luts}')
+                    # print(f'adding edge from IN{i} to OUT{j-self.num_luts}')
                     graph.add_edge(f'IN{i}', f'OUT{j-self.num_luts}')
 
         ## Connect LUTs to other LUTs and to outputs according to lut_connectionmat
         for i in range(self.num_luts):
             for j in range(self.num_luts):
                 if self.lut_connectionmat[i][j] == 1:
-                    print(f'adding edge from LUT{i} to LUT{j}')
+                    # print(f'adding edge from LUT{i} to LUT{j}')
                     graph.add_edge(f'LUT{i}', f'LUT{j}')
             for j in (range(self.num_luts, self.num_luts+self.num_outputs)):
                 if self.lut_connectionmat[i][j] == 1:
-                    print(f'adding edge from LUT{i} to OUT{j-self.num_luts}')
+                    # print(f'adding edge from LUT{i} to OUT{j-self.num_luts}')
                     graph.add_edge(f'LUT{i}', f'OUT{j-self.num_luts}')
-
 
         # nx.draw(graph, with_labels=True, font_weight='bold', node_color='skyblue', node_size=800, font_size=8, arrowsize=15)
         # plt.show()
 
         return graph
 
-    # def map_function(self, fn_bstring, inputs, output):
-    def map_function(self):
+    def map_function(self, fn_bstring):
         '''
         Maps a boolean logic expression to the FPGA
 
         fn_bstring: function in bstring format: ['10-0', '1--0', '1011']
         '''
-        fn_bstring = ['000']
+
         ## Convert function to graph
-        fn_graph = to_graph(fn_bstring)
+        fn_graph = to_graph(fn_bstring, self.lut_type)
 
-        print(fn_graph.edges)
-
-        # graph = nx.DiGraph()
-        # graph.add_node(f'IN{0}', type="input", id=0)
-        # graph.add_node(f'IN{1}', type="input", id=1)
-        # graph.add_node(f'IN{2}', type="input", id=2)
-
-        # graph.add_node(f'OUT{1}', type="output", id=1)
-
-        # graph.add_node(f'LUT{0}', type="LUT", id=0)
-        # graph.add_node(f'LUT{1}', type="LUT", id=1)
-        # graph.add_node(f'LUT{2}', type="LUT", id=2)
-
-        # graph.add_edge(f'IN{0}', f'LUT{0}')
-        # graph.add_edge(f'IN{0}', f'LUT{1}')
-        # graph.add_edge(f'IN{1}', f'LUT{0}')
-        # graph.add_edge(f'IN{1}', f'LUT{1}')
-        # graph.add_edge(f'IN{2}', f'LUT{0}')
-        # graph.add_edge(f'IN{2}', f'LUT{1}')
-
-        # graph.add_edge(f'LUT{0}', f'LUT{2}')
-        # graph.add_edge(f'LUT{1}', f'LUT{2}')
-
-        # graph.add_edge(f'LUT{2}', f'OUT{1}')
-
-        # print(fn_graph.nodes)
-        # for edge in fn_graph.nodes:
-        #     print(edge)
-        # print(" ")
-        # # print(self.availability_graph.nodes)
-        # for edge in self.availability_graph.nodes:
-        #     print (edge)
-        # print(self.availability_graph.nodes['IN0']['id'])
-        # print(self.availability_graph.nodes['IN0'] == fn_graph.nodes['IN0'])
+        ## Helper function for DiGraphMatcher(), defines when nodes should be considered equal
+        def node_match (node1, node2):  
+            if node1['type'] == node2['type']:
+                if node1['type'] == 'LUT':
+                    return True
+                elif node1['id'] == node2['id']:
+                    return True
+            return False
 
         ## Check if function can be mapped to FPGA - checking if subgraph exists in larger graph
-        def node_match (node1, node2): 
-            print(node1, node2, node1['type'] == node2['type'] and node1['id'] == node2['id'])
-            return node1['type'] == node2['type'] and node1['id'] == node2['id'] 
-        def edge_match (edge1, edge2):
-            print("edge1, edge2, edge1==edge2")
-            return edge1==edge2
+        isos = list(iso.DiGraphMatcher(self.availability_graph, fn_graph,node_match=node_match).subgraph_monomorphisms_iter())
+        
+        ## Remove mapped LUT and output nodes from availability_graph
+        if len(isos) > 0:
+            ## Get list of all nodes that are being mapped 
+            mapped_nodes = isos[0].keys()
 
-        matcher = nx.algorithms.isomorphism.GraphMatcher(fn_graph, self.availability_graph, node_match=node_match, edge_match=edge_match)
+            ## List of nodes to be removed
+            to_be_removed = []
+            for node in mapped_nodes:
+                if node[:2] != 'IN':
+                    to_be_removed.append(node)
 
-        if matcher.subgraph_is_isomorphic():
-            matched_nodes = matcher.mapping
+            ## Remove mapped nodes from availability graph
+            self.availability_graph.remove_nodes_from(to_be_removed)
 
-            # nodes_to_remove = [larger_node for larger_node, _ in matched_nodes.items()]
-            # self.availability_graph.remove_nodes_from(nodes_to_remove)
-
-            # for node, _ in matched_nodes.items():
-            #     if node.type == "LUT":
-            #         self.lut_list[node.id].is_available = False
-            #         self.availability_graph.remove_node(node)
-                    
-            return True
+            print(f"Nodes {to_be_removed} have been mapped and removed from the availability_graph.")
         else:
+            print("Function cannot be mapped to FPGA.")
             return False
-        # matcher = nx.isomorphism.DiGraphMatcher(self.availability_graph, fn_graph, node_match=node_match, edge_match=edge_match)
 
-        # matcher.subgraph_is_isomorphic()
-        # print(matcher.mapping)
-        # if matcher.subgraph_is_isomorphic():
-        #     print("Found isomorphic subgraph.")
-        #     matched_nodes = matcher.mapping
-
-        #     for node, _ in matched_nodes.items():
-        #         if node['type'] == "LUT":
-        #             nodes_to_remove = [larger_node for larger_node in larger_dag.nodes if larger_node['type'] == node['type'] and larger_node['id'] == node['id']]
-        #             larger_dag.remove_nodes_from(nodes_to_remove)
-
-        #     return True
-        # else:
-        #     return False
+        ## Map to LUTs
+        for node in mapped_nodes:
+            if node[:3] == 'LUT':
+                idx = node[4]
+                self.lut_list[idx].map_function()
 
 
 
