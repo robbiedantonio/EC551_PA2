@@ -189,8 +189,15 @@ class FPGA:
 
         if matcher.subgraph_is_isomorphic():
             matched_nodes = matcher.mapping
-            nodes_to_remove = [larger_node for larger_node, _ in matched_nodes.items()]
-            self.availability_graph.remove_nodes_from(nodes_to_remove)
+
+            # nodes_to_remove = [larger_node for larger_node, _ in matched_nodes.items()]
+            # self.availability_graph.remove_nodes_from(nodes_to_remove)
+
+            # for node, _ in matched_nodes.items():
+            #     if node.type == "LUT":
+            #         self.lut_list[node.id].is_available = False
+            #         self.availability_graph.remove_node(node)
+                    
             return True
         else:
             return False
