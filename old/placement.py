@@ -3,6 +3,29 @@ LUTS needs to be placed as well as linking to the buses
 
 '''
 
+def contraints(nInputs, file):
+    nLUT = 0
+    file = open(file,'r')
+
+    cMatrix = []
+    cDict = {}
+
+    for line in file:
+        if '.nLUT' in line:
+            nLUT = int(line.split(' ')[1].strip())
+        if ':LUT' in line:
+            t = line.split(' ')
+            lut = t[0][1::]
+            print(lut, t[1])
+        
+    for i in range(nInputs+nLUT):
+        cMatrix.append([])
+        for j in range(nInputs+nLUT):
+            cMatrix[i]
+
+    return nLUT, cMatrix
+
+
 def input_to_lut_partition(expression, inputs, numInputLUT):
     '''
         input: 
@@ -64,8 +87,11 @@ def input_to_lut_partition(expression, inputs, numInputLUT):
     return LUTs, lutCount 
 
 stack = []
+pi = {}
+
 def topological_sort(adjList, node):
     global stack
+    global pi
 
     if adjList.get(node, None) == None:
         return
@@ -73,20 +99,25 @@ def topological_sort(adjList, node):
         while adjList[node]:
             child = adjList[node].pop(0)
 
+            if pi.get(child,0) == 0:
+                pi[child] = []
+
+            pi[child].append(node)
+
             if child in stack:
                 continue
-
             topological_sort(adjList, child)
+            
             stack.append(child)
 
         if node not in stack:
             stack.append(node)
-            
+
 if __name__ == "__main__":
 
     # testing down here
 
-    numLUTs = 8
+    numLUTs, cMatrix = contraints('tests/FPGA.pla')
 
     inputs1 = list('ABCDE')
     inputs2 = ['a', 'b', 'c', 'd']
@@ -106,6 +137,8 @@ if __name__ == "__main__":
     for k in lut_mapping.keys():
         topological_sort(lut_mapping, k)
 
+    for k,v in pi.items():
+        print(k,v)
     print(stack)
 
 

@@ -4,7 +4,7 @@ Fall 2023
 ENG EC551
 Professor Densmore
 '''
-
+from tkinter import *
 from pla_parser import *
 from canonicals import *
 from minimize import *
@@ -69,7 +69,24 @@ print('\n')
 # 	print(op,':', to_POS(minimized_POS_dict[op], input_names))
 
 
+'''
+UI should have:
+	textbox for input equations functions
+	
 
+	Behavioral Analysis:
+		12 functions
+		Run Simulation
+			Simple Waveform
+			input .tst file or manually input truth table
+
+	FPGA drop down:
+		run synthesis
+		run implementation
+		generate bitstream -> save to file
+		upload to FPGA
+
+'''
 
 
 
