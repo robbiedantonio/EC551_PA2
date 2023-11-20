@@ -20,8 +20,11 @@ print(minimized_SOP_dict)
 
 # print(tt_onehot (minimized_SOP_dict['X']))
 
+print("f",tt_onehot(['---11'],4))
 
 fpga = FPGA(num_inputs=4, num_outputs=4, num_luts=8, lut_type=4, input_connectionmat=None, lut_connectionmat=None)
+
+print(fpga.map_function(minimized_SOP_dict['F']))
 
 # fpga.printInfo()
 
