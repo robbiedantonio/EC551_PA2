@@ -23,6 +23,7 @@ fpga.map_function(minimized_SOP_dict['X'], circuit['inputs'], 'X')
 fpga.map_function(minimized_SOP_dict['Y'], circuit['inputs'], 'Y')
 fpga.map_function(minimized_SOP_dict['Z'], circuit['inputs'], 'Z')
 fpga.map_function(minimized_SOP_dict['F'], circuit['inputs'], 'F')
+fpga.map_function(minimized_SOP_dict['G'], circuit['inputs'], 'G')
 
 fpga.print_info()
 
