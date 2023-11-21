@@ -23,15 +23,7 @@ fpga.init_variables(circuit['inputs'], circuit['outputs'])
 for literal in minimized_SOP_dict.keys():
 	fpga.map_function(minimized_SOP_dict[literal], circuit['inputs'], literal)
 
-# fpga.map_function(minimized_SOP_dict['X'], circuit['inputs'], 'X')
-# fpga.map_function(minimized_SOP_dict['Y'], circuit['inputs'], 'Y')
-# fpga.map_function(minimized_SOP_dict['Z'], circuit['inputs'], 'Z')
-# fpga.map_function(minimized_SOP_dict['F'], circuit['inputs'], 'F')
-# fpga.map_function(minimized_SOP_dict['G'], circuit['inputs'], 'G')
-
-# fpga.print_info()
-
-fpga.run_input([1,0,0,1,0,1])
+print("Evaluating all 1s on inputs", fpga.run_input([1,1,1,1,1,1]))
 
 # print(fpga.map_function(minimized_SOP_dict['F']))
 

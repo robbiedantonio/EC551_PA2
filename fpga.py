@@ -232,32 +232,34 @@ class FPGA:
             return False
 
         ## Map to LUTs
-        print(mapped_nodes)
         for fpga_node, fn_node in isos.items():
             if fn_node[:3] == 'LUT':
                 lut_inputs = [key for key, value in isos.items() if any(element in value for element in fn_dict[fn_node]['inputs'])]
-                idx = int(fpga_node[3])
+                idx = int(fpga_node[3:])
                 self.lut_list[idx].map_function(lut_inputs, fn_dict[fn_node]['truth_table'])
                 # self.graph.nodes[fpga_node]['function'] = fn_dict[fn_node]['truth_table']
 
-                # if fn_node == output_lut:
-                #     self.graph.nodes[]
+                if fn_node == output_lut:
+                    out_node = [key for key in mapped_nodes.keys() if key[:3] == 'OUT'][0]
+                    self.graph.nodes[out_node]['lut_assignment'] = fpga_node
+                    # print(fpga_node)
 
 
     def run_input(self, input_vec):
         '''
         Evaluates the current FPGA mapping for the inputs in input_vec
         '''
+        output_return_dict={}
 
         def evaluate_LUT(lut_struct, input_val_dict):
             ## Recursive helper function to get value of LUTs
             for i, ip in enumerate(lut_struct.inputs):
                 if ip[:3] == 'LUT':
-                    lut_struct.values[i] = evaluate_LUT(self.lut_list[i])
+                    lut_struct.local_values[i] = evaluate_LUT(self.lut_list[int(ip[3:])], input_val_dict)
                 else:
-                    lut_struct.values[i] = input_val_dict[ip]
-            idx = int(''.join(map(str, binary_list)), 2)
-            return lut_struct.function(idx)
+                    lut_struct.local_values[i] = input_val_dict[ip]
+            idx = int(''.join(map(str, lut_struct.local_values)), 2)
+            return lut_struct.function[idx]
 
 
         ## Create dictionary of input nodes
@@ -267,10 +269,11 @@ class FPGA:
 
         for node, data in self.graph.nodes(data=True):
             if data['type'] == 'output':
-                pass
+                lut_struct = self.graph.nodes[data['lut_assignment']]['struct']
 
-                
+                output_return_dict[self.output_names[node]] = evaluate_LUT(lut_struct, input_val_dict)
 
+        return output_return_dict
 
 
     def print_info(self):
