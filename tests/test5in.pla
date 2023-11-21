@@ -2,7 +2,7 @@
 .no 4
 .vi A B C D E
 .vo X Y Z F G
-.sop A*B*C*D*E 
+.sop A*B*C*D*E
 .sop A*B*C  A*C'*D  B*D*E  C'*E
 .sop B*C'*D  C'*D*E
 .sop A*B*C*D'*E A*B*C*D*E
