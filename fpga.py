@@ -2,6 +2,7 @@ import networkx as nx
 import networkx.algorithms.isomorphism as iso
 import matplotlib.pyplot as plt
 import numpy as np
+import copy
 from map_utilities import *
 
 class LUT:
@@ -53,8 +54,8 @@ class FPGA:
             self.output_names[f'OUT{i}'] = None
 
         ## Initialize FPGA graphs
-        self.graph = self.init_graph()          ## Constant graph
-        self.availability_graph = self.graph    ## Availability graph - nodes get removed as functions are mapped
+        self.graph = self.init_graph()                         ## Constant graph
+        self.availability_graph = copy.deepcopy(self.graph)    ## Availability graph - nodes get removed as functions are mapped
 
         # print(self.input_connectionmat)
         # print(self.lut_connectionmat)
@@ -141,17 +142,17 @@ class FPGA:
         ## Add input nodes
         for i in range(self.num_inputs):
             # print (f'IN{i} added')
-            graph.add_node(f'IN{i}', type="input", id=i)
+            graph.add_node(f'IN{i}', type="input", id=i, value=None)
 
         ## Add output nodes
         for i in range(self.num_outputs):
             # print (f'OUT{i} added')
-            graph.add_node(f'OUT{i}', type="output", id=i)
+            graph.add_node(f'OUT{i}', type="output", id=i, value=None)
 
         ## Add LUT nodes
         for i in range(self.num_luts):
             # print(f'LUT{i} added')
-            graph.add_node(f'LUT{i}', type="LUT", id=i)
+            graph.add_node(f'LUT{i}', type="LUT", id=i, value=None, function=None)  ## Function gets mapped later!
 
         ## Connect inputs to LUTs and outputs according to input_connectionmat
         for i in range(self.num_inputs):
@@ -177,6 +178,7 @@ class FPGA:
 
         # nx.draw(graph, with_labels=True, font_weight='bold', node_color='skyblue', node_size=800, font_size=8, arrowsize=15)
         # plt.show()
+        # print(graph.nodes)
 
         return graph
 
@@ -187,16 +189,10 @@ class FPGA:
         fn_bstring: function in bstring format: ['10-0', '1--0', '1011']
         '''
 
-        # ## Get internal assignments of input variables:
-        # current_ip_variables = []
-        # for variable in input_name_list:
-        #     for internal, external in self.input_names.items():
-        #         if variable == external
-
-        ## Get LUT mappings and graph of function
-
+        ## Get internal mappings for input and output names
         ips, ops = self.find_internal_names(input_name_list, [output_name])
-
+        
+        ## Get LUT mappings and graph of function
         fn_dict, fn_graph = fn_make_packet(fn_bstring, self.lut_type, self.num_inputs, ops[0])
 
         ## Helper function for DiGraphMatcher(), defines when nodes should be considered equal
@@ -208,12 +204,14 @@ class FPGA:
                     return True
             return False
 
-        isos = list(iso.DiGraphMatcher(self.availability_graph, fn_graph,node_match=node_match).subgraph_monomorphisms_iter())
-        
+        # isos = list(iso.DiGraphMatcher(self.availability_graph, fn_graph,node_match=node_match).subgraph_monomorphisms_iter())
+        isos = next(iso.DiGraphMatcher(self.availability_graph, fn_graph, node_match=node_match).subgraph_monomorphisms_iter(), None)
+
         ## Remove mapped LUT and output nodes from availability_graph
-        if len(isos) > 0:
+        if isos != None:
             ## Get list of all nodes that are being mapped 
-            mapped_nodes = isos[0].keys()
+            # mapped_nodes = isos[0].keys()
+            mapped_nodes = isos
 
             ## List of nodes to be removed
             to_be_removed = []
@@ -230,11 +228,25 @@ class FPGA:
             return False
 
         ## Map to LUTs
-        for fpga_node, fn_node in isos[0].items():
+        # for fpga_node, fn_node in isos[0].items():
+        for fpga_node, fn_node in isos.items():
             if fn_node[:3] == 'LUT':
                 idx = int(fpga_node[3])
                 self.lut_list[idx].map_function(fn_dict[fn_node]['truth_table'])
-    
+                self.graph.nodes[fpga_node]['function'] = fn_dict[fn_node]['truth_table']
+
+
+    def run_input(self, input_vec):
+        '''
+        Evaluates the current FPGA mapping for the inputs in input_vec
+        '''
+
+        ## Set values on input nodes
+        for i in range(self.num_inputs):
+            self.graph.nodes[f'IN{i}']['value'] = input_vec[i]
+
+        ## Move through graph
+
     def print_info(self):
         '''
         Prints general info on FPGA
