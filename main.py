@@ -4,7 +4,7 @@ Fall 2023
 ENG EC551
 Professor Densmore
 '''
-from tkinter import *
+
 from pla_parser import *
 from canonicals import *
 from minimize import *
@@ -20,16 +20,15 @@ filename = 'tests/test.pla'
 ## if (filename)
 circuit = parse(filename)
 # print(circuit)
-canonical_SOP 	= canonicals(circuit, 'SOP', False)
-canonical_POS 	= canonicals(circuit, 'POS', False)
-canonical_SOP_I = canonicals(circuit, 'SOP', True)
-canonical_POS_I = canonicals(circuit, 'POS', True)
+canonical_SOP, numberNotation_SOP = canonicals(circuit, 'SOP', False)
+canonical_POS, numberNotation_POS = canonicals(circuit, 'POS', False)
+canonical_SOP_I, numberNotation_SOP_I = canonicals(circuit, 'SOP', True)
+canonical_POS_I, numberNotation_POS_I = canonicals(circuit, 'POS', True)
 
 minimized_SOP_dict, pi_count, epi_count = minimize_SOP(circuit)
 minimized_POS_dict, pi_count, epi_count = minimize_POS(circuit)
 
-print(canonical_SOP['expressions'])
-print(canonical_SOP['one_hot'])
+print(canonical_SOP)
 
 print("\nMINIMIZED SUM OF PRODUCT")
 for ovar, oexp in minimized_SOP_dict.items():
@@ -37,9 +36,6 @@ for ovar, oexp in minimized_SOP_dict.items():
 print('\n')
 
 
-
-for op, op_list in output_dict.items():
-	print(op,':', to_SOP(canonSOP_dict[op], input_names))
 # print('\n')
 
 print("\nMINIMIZED PRODUCT OF SUM")
@@ -76,15 +72,17 @@ UI should have:
 
 	Behavioral Analysis:
 		12 functions
-		Run Simulation
-			Simple Waveform
-			input .tst file or manually input truth table
+		Simple Waveform
+		input .tst file or manually input truth table
+		# literals 
+		# implicants
 
 	FPGA drop down:
 		run synthesis
 		run implementation
 		generate bitstream -> save to file
 		upload to FPGA
+
 
 '''
 
