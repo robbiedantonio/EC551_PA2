@@ -91,7 +91,7 @@ def parse_term(exp_T, ninputs, inputs, terms):
         # print("popping term",x+1)
         binform.pop(x)
 
-    print(binform)
+    # print(binform)
 
     return binform
 

@@ -14,12 +14,17 @@ from tkinter import *
 
 WIDTH = 1200
 HEIGHT = 600
-circuit = {}
 
-tool_frame_dict = {
-    "HOME":[200,50],
-    "Behavioral Analysis":[200,50],
-}
+circuit = {}
+cExpressions = None
+cLiterals = -1
+numberNotation = None
+
+mExpression = None
+mLiterals = -1
+
+pi_count = -1 
+epi_count = -1
     
 root = Tk()
 
@@ -31,20 +36,29 @@ root.geometry(f"{WIDTH}x{HEIGHT}")
 root.minsize(320, 500)
 
 def canonical(circuit, eForm, inv):
-    expressions, numberNotation = canonicals(circuit, eForm, inv)
+    global cExpressions, numberNotation, cLiterals
+    cExpressions, numberNotation, cLiterals = canonicals(circuit, eForm, inv)
 
-def minimize(circuit, eForm):
-    expression, pi_count, epi_count
+def minimize(circuit, eType):
+    global mExpression, pi_count, epi_count, mLiterals
 
-    if eForm == 'SOP':
-        expression, pi_count, epi_count = minimize_SOP(circuit)
-    elif eForm == 'POS':
-        expression, pi_count, epi_count = minimize_POS(circuit) 
+    if eType == 'SOP':
+        mExpression, pi_count, epi_count = minimize_SOP(circuit)
+    elif eType == 'POS':
+        mExpression, pi_count, epi_count = minimize_POS(circuit) 
     
-    return expression, pi_count, epi_count
 
 def left_pane():
     global root
+    global circuit
+
+    def func():
+        if eType == 'CAN':
+            canonical(circuit, eForm, inv)
+        else:
+          minimize(circuit, eType)
+
+
     left_frame = Frame(root, width=300, height=HEIGHT, bg='white')
     left_frame.grid(row=0,column=0,padx=50, pady=10)
 
@@ -65,7 +79,7 @@ def left_pane():
     Label(left_frame, text="Inverse: ").grid(row=4,column=0,padx=5, pady=5)
     Radiobutton(left_frame, variable=inv, value=True, text="Yes").grid(row=4,column=1,padx=5, pady=5)
     Radiobutton(left_frame, variable=inv, value=False, text="No").grid(row=4,column=2,padx=5, pady=5)
-    Button(left_frame, text="Build Analysis").grid(row=5,column=1,padx=5, pady=5)
+    Button(left_frame, text="Build Analysis", command=func).grid(row=5,column=1,padx=5, pady=5)
     
     # Label(left_frame, text="Functions").grid(row=4,column=0,padx=5, pady=5)
     # Button(left_frame, text="Delays").grid(row=4,column=1,padx=5, pady=5)
@@ -80,6 +94,7 @@ def left_pane():
 
 
 def right_pane():
+    global root
     global circuit
 
     def getFileName():
@@ -106,14 +121,21 @@ def right_pane():
 
 
 def pane3():
-
     global root
+    global circuit
+    global cLiterals
+
     right_frame = Frame(root, width=300, height=HEIGHT, bg='white')
     right_frame.grid(row=0,column=2,padx=5, pady=10)
 
-    Label(right_frame, text="Functions:").grid(row=0,column=0,columnspan=3,padx=5, pady=5)
-    Label(right_frame, text="# literals:").grid(row=1,column=0,columnspan=3,padx=5, pady=5)
-    # Label(right_frame, textvariable=).grid(row=1,column=1,columnspan=3,padx=5, pady=5)
+    Label(right_frame, text="Functions:").grid(row=0,column=0,padx=5, pady=5)
+    Label(right_frame, text="# literals:").grid(row=1,column=0,padx=5, pady=5)
+
+    if cLiterals:
+        literals = cLiterals
+        for i, k in enumerate(cLiterals.keys()):
+            Label(right_frame, textvariable=f"# literals: {k}").grid(row=1+i,column=0,padx=5, pady=5)
+            Label(right_frame, textvariable=f"{cLiterals[k]} literals").grid(row=1+i,column=1,padx=5, pady=5)
 
 left_pane()
 right_pane()

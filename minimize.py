@@ -239,13 +239,20 @@ def minimize_SOP (circuit):
         minimized_dict: A dictionary, containing output names as the keys and a minimized SOP list for the value of each output key
     '''
     minimized_dict = {}
+    literals = {}
 
     for op, op_list in circuit['output_vector'].items():
         minimized_exp, pi_count, epi_count = ( find_single_min(circuit['ninputs'], to_onehot(circuit['ninputs'], ",".join(op_list)) ))
         # minimized_dict[op] = to_SOP(minimized_exp, circuit['inputs'])
         minimized_dict[op] = minimized_exp
 
-    return minimized_dict, pi_count, epi_count
+        literals[op] = 0
+        for term in minimized_exp:
+            for bit in term:
+                if bit != '-':
+                    literals[op] += 1
+
+    return minimized_dict, pi_count, epi_count, literals
 
 def minimize_POS (circuit):
     '''
@@ -258,6 +265,7 @@ def minimize_POS (circuit):
         minimized_dict: A dictionary, containing output names as the keys and a minimized SOP list for the value of each output key
     '''
     minimized_dict = {}
+    literals = {}
 
     for op, op_list in circuit['output_vector'].items():
         inverted_list = invert_onehot(to_onehot(circuit['ninputs'], ",".join(op_list)))
@@ -265,7 +273,13 @@ def minimize_POS (circuit):
         # minimized_dict[op] = to_POS(minimized_exp, circuit['inputs'])
         minimized_dict[op] = minimized_exp
 
-    return minimized_dict, pi_count, epi_count
+        literals[op] = 0
+        for term in minimized_exp:
+            for bit in term:
+                if bit != '-':
+                    literals[op] += 1
+
+    return minimized_dict, pi_count, epi_count, literals
 
 
 
