@@ -10,14 +10,18 @@ class LUT:
         self.lut_id = lut_id          # Unique ID assosiciated with this LUT only
         self.lut_type = lut_type      # Number of inputs into LUT, either 4 or 6
         self.is_available = True      # True if LUT can have function mapped to it, false if function is already mapped
+        self.inputs = None            # Inputs into the LUT
         self.function = None          # Function mapped to the LUT in onehot format
+        self.local_values=None        # Used for run_input()
 
-    def map_function (self, function_onehot):
+    def map_function (self, inputs, function_onehot):
         '''
         Maps a function to the LUT
 
         function_onehot: one-hot list of length 2**lut_type. The truth table for function
         '''
+        self.inputs = inputs
+        self.local_values = [0] * len(self.inputs)
         self.function = function_onehot
         self.is_available = False
 
@@ -147,12 +151,12 @@ class FPGA:
         ## Add output nodes
         for i in range(self.num_outputs):
             # print (f'OUT{i} added')
-            graph.add_node(f'OUT{i}', type="output", id=i, value=None)
+            graph.add_node(f'OUT{i}', type="output", id=i, value=None, lut_assignment=None)
 
         ## Add LUT nodes
         for i in range(self.num_luts):
             # print(f'LUT{i} added')
-            graph.add_node(f'LUT{i}', type="LUT", id=i, value=None, function=None)  ## Function gets mapped later!
+            graph.add_node(f'LUT{i}', type="LUT", id=i, value=None, struct=self.lut_list[i])  ## Function gets mapped later!
 
         ## Connect inputs to LUTs and outputs according to input_connectionmat
         for i in range(self.num_inputs):
@@ -193,7 +197,7 @@ class FPGA:
         ips, ops = self.find_internal_names(input_name_list, [output_name])
         
         ## Get LUT mappings and graph of function
-        fn_dict, fn_graph = fn_make_packet(fn_bstring, self.lut_type, self.num_inputs, ops[0])
+        fn_dict, fn_graph, output_lut = fn_make_packet(fn_bstring, self.lut_type, self.num_inputs, ops[0])
 
         ## Helper function for DiGraphMatcher(), defines when nodes should be considered equal
         def node_match (node1, node2):  
@@ -228,12 +232,16 @@ class FPGA:
             return False
 
         ## Map to LUTs
-        # for fpga_node, fn_node in isos[0].items():
+        print(mapped_nodes)
         for fpga_node, fn_node in isos.items():
             if fn_node[:3] == 'LUT':
+                lut_inputs = [key for key, value in isos.items() if any(element in value for element in fn_dict[fn_node]['inputs'])]
                 idx = int(fpga_node[3])
-                self.lut_list[idx].map_function(fn_dict[fn_node]['truth_table'])
-                self.graph.nodes[fpga_node]['function'] = fn_dict[fn_node]['truth_table']
+                self.lut_list[idx].map_function(lut_inputs, fn_dict[fn_node]['truth_table'])
+                # self.graph.nodes[fpga_node]['function'] = fn_dict[fn_node]['truth_table']
+
+                # if fn_node == output_lut:
+                #     self.graph.nodes[]
 
 
     def run_input(self, input_vec):
@@ -241,11 +249,29 @@ class FPGA:
         Evaluates the current FPGA mapping for the inputs in input_vec
         '''
 
-        ## Set values on input nodes
-        for i in range(self.num_inputs):
-            self.graph.nodes[f'IN{i}']['value'] = input_vec[i]
+        def evaluate_LUT(lut_struct, input_val_dict):
+            ## Recursive helper function to get value of LUTs
+            for i, ip in enumerate(lut_struct.inputs):
+                if ip[:3] == 'LUT':
+                    lut_struct.values[i] = evaluate_LUT(self.lut_list[i])
+                else:
+                    lut_struct.values[i] = input_val_dict[ip]
+            idx = int(''.join(map(str, binary_list)), 2)
+            return lut_struct.function(idx)
 
-        ## Move through graph
+
+        ## Create dictionary of input nodes
+        input_val_dict = {}
+        for i in range(self.num_inputs):
+            input_val_dict[f'IN{i}'] = input_vec[i]
+
+        for node, data in self.graph.nodes(data=True):
+            if data['type'] == 'output':
+                pass
+
+                
+
+
 
     def print_info(self):
         '''

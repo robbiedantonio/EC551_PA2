@@ -7,6 +7,7 @@ from fpga import *
 
 from map_utilities import *
 
+from tqdm import tqdm
 
 
 
@@ -16,16 +17,21 @@ circuit = parse(filename)
 minimized_SOP_dict, pi_count, epi_count = minimize_SOP(circuit)
 print(minimized_SOP_dict)
 
-fpga = FPGA(num_inputs=6, num_outputs=4, num_luts=10, lut_type=4, input_connectionmat=None, lut_connectionmat=None)
+fpga = FPGA(num_inputs=6, num_outputs=5, num_luts=32, lut_type=4, input_connectionmat=None, lut_connectionmat=None)
 fpga.init_variables(circuit['inputs'], circuit['outputs'])
 
-fpga.map_function(minimized_SOP_dict['X'], circuit['inputs'], 'X')
-fpga.map_function(minimized_SOP_dict['Y'], circuit['inputs'], 'Y')
-fpga.map_function(minimized_SOP_dict['Z'], circuit['inputs'], 'Z')
-fpga.map_function(minimized_SOP_dict['F'], circuit['inputs'], 'F')
-fpga.map_function(minimized_SOP_dict['G'], circuit['inputs'], 'G')
+for literal in minimized_SOP_dict.keys():
+	fpga.map_function(minimized_SOP_dict[literal], circuit['inputs'], literal)
 
-fpga.print_info()
+# fpga.map_function(minimized_SOP_dict['X'], circuit['inputs'], 'X')
+# fpga.map_function(minimized_SOP_dict['Y'], circuit['inputs'], 'Y')
+# fpga.map_function(minimized_SOP_dict['Z'], circuit['inputs'], 'Z')
+# fpga.map_function(minimized_SOP_dict['F'], circuit['inputs'], 'F')
+# fpga.map_function(minimized_SOP_dict['G'], circuit['inputs'], 'G')
+
+# fpga.print_info()
+
+fpga.run_input([1,0,0,1,0,1])
 
 # print(fpga.map_function(minimized_SOP_dict['F']))
 
