@@ -30,6 +30,7 @@ class FPGA:
         self.num_inputs = num_inputs    # Number of inputs on this FPGA
         self.num_outputs = num_outputs  # Number of outputs on this FPGA
         self.num_luts = num_luts        # Number of LUTs in this FPGA
+        self.num_luts_inuse = 0         # Number of LUTs that aren't available
         self.lut_type = lut_type        # Type of LUTs (4-input or 6-input)
         self.input_names = {}           # Dictionary to store mappings between input variable names and internal names (IN0, IN1,...)
         self.output_names = {}          # Dictionary to store mappings between output variable names and internal names (OUT0,...)
@@ -103,11 +104,11 @@ class FPGA:
         Define mapping of external names to internal names
         '''
         ## Inputs
-        for i in range(len(input_name_list)):
+        for i in range(min(self.num_inputs, len(input_name_list))):
             self.input_names[f'IN{i}'] = input_name_list[i]
 
         ## Initialize output_names
-        for i in range(len(output_name_list)):
+        for i in range(min(self.num_outputs, len(output_name_list))):
             self.output_names[f'OUT{i}'] = output_name_list[i]
 
     def find_internal_names(self, input_names_list, output_names_list):
@@ -194,7 +195,13 @@ class FPGA:
         '''
 
         ## Get internal mappings for input and output names
-        ips, ops = self.find_internal_names(input_name_list, [output_name])
+        _, ops = self.find_internal_names(input_name_list, [output_name])
+
+        ## If ops is none, return False
+        if not ops:
+            ops = ['XXXX']
+            # print(f"\033[91mmap_function: Failed to map function {output_name} to FPGA - no more output nodes available\033[0m")
+            # return False
         
         ## Get LUT mappings and graph of function
         fn_dict, fn_graph, output_lut = fn_make_packet(fn_bstring, self.lut_type, self.num_inputs, ops[0])
@@ -226,9 +233,9 @@ class FPGA:
             ## Remove mapped nodes from availability graph
             self.availability_graph.remove_nodes_from(to_be_removed)
 
-            print(f"Nodes {to_be_removed} have been mapped and removed from the availability_graph.")
+            # print(f"Nodes {to_be_removed} have been mapped and removed from the availability_graph.")
         else:
-            print("Function cannot be mapped to FPGA.")
+            print(f"\033[91mmap_function: Failed to map function {output_name} to FPGA\033[0m")
             return False
 
         ## Map to LUTs
@@ -237,7 +244,8 @@ class FPGA:
                 lut_inputs = [key for key, value in isos.items() if any(element in value for element in fn_dict[fn_node]['inputs'])]
                 idx = int(fpga_node[3:])
                 self.lut_list[idx].map_function(lut_inputs, fn_dict[fn_node]['truth_table'])
-                # self.graph.nodes[fpga_node]['function'] = fn_dict[fn_node]['truth_table']
+                self.num_luts_inuse += 1
+
 
                 if fn_node == output_lut:
                     out_node = [key for key in mapped_nodes.keys() if key[:3] == 'OUT'][0]
@@ -262,6 +270,10 @@ class FPGA:
             return lut_struct.function[idx]
 
 
+        if len(input_vec) < self.num_inputs:
+            print(f"\033[91mrun_input: Not enough inputs provided - aborting\033[0m")
+            return False
+
         ## Create dictionary of input nodes
         input_val_dict = {}
         for i in range(self.num_inputs):
@@ -269,11 +281,25 @@ class FPGA:
 
         for node, data in self.graph.nodes(data=True):
             if data['type'] == 'output':
-                lut_struct = self.graph.nodes[data['lut_assignment']]['struct']
-
-                output_return_dict[self.output_names[node]] = evaluate_LUT(lut_struct, input_val_dict)
+                if data['lut_assignment'] != None:
+                    lut_struct = self.graph.nodes[data['lut_assignment']]['struct']
+                    output_return_dict[self.output_names[node]] = evaluate_LUT(lut_struct, input_val_dict)
 
         return output_return_dict
+
+    def get_bitstream(self):
+        '''
+        Returns a bitstream that represents the current internal state of the FPGA
+        '''
+        pass
+        
+
+    def load_from_bitstream(self, bitstream):
+        '''
+        Sets the internal state of the FPGA based on data in the bitstream
+        '''
+        # Reset the FPGA to its initial state
+        pass
 
 
     def print_info(self):
@@ -285,15 +311,26 @@ class FPGA:
         print(f"Inputs per LUT: \033[94m{self.lut_type}\033[0m")
         print(f"Number of Inputs to FPGA: \033[94m{self.num_inputs}\033[0m")
         print(f"Number of Outputs from FPGA: \033[94m{self.num_outputs}\033[0m")
+        print(f"Input Variable Mappings: \033[94m{self.input_names}\033[0m")
+        print(f"Output Variable Mappings: \033[94m{self.output_names}\033[0m")
         print(f"Possible Connections between inputs and LUTs/outputs: \n\033[94m{self.input_connectionmat}\033[0m")
-        print(f"Possible Connections between LUTs and other  LUTs/outputs: \n\033[94m{self.lut_connectionmat}\033[0m")
+        print(f"Possible Connections between LUTs and other LUTs/outputs: \n\033[94m{self.lut_connectionmat}\033[0m")
 
         print("\n\033[1mFPGA LUTS INFORMATION\033[0m")
+        print(f"\033[1mLUT usage: {round(self.num_luts_inuse / self.num_luts * 100,2)}%\n\033[0m")
         for lut in self.lut_list:
             print(f"\033[1mLUT ID: {lut.lut_id}\033[0m")
             print(f"Number of Inputs: \033[94m{lut.lut_type}\033[0m")
+            print(f"LUT inputs: \033[94m{lut.inputs}\033[0m")
             print(f"Is Available?: \033[94m{lut.is_available}\033[0m")
             print(f"Mapped Function: \033[94m{lut.function}\033[0m\n")
+
+        print("\n\033[1mFPGA OUTPUT NODES\033[0m")
+        for node, data in self.graph.nodes(data=True):
+            if data['type'] == 'output':
+                print(f"\033[1mOutput Node: {node}\033[0m")
+                print(f"LUT Assignment: \033[94m{data['lut_assignment']}\033[0m\n")
+
 
 
 
