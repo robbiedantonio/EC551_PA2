@@ -46,7 +46,7 @@ a. Report on the number of saved literals vs. the canonical version
 '''
 
 command = {
-      'default': "press Q to quit or C to continue.\ntype \'help'\' for help",
+      'default': f"\n\n{'-'*50}\npress Q to quit or C to continue.\ntype \'help'\' for help",
       'file': "input a file to get started",
       'func': "please select a function 1 - 12",
       "help": 
@@ -180,16 +180,24 @@ def decode(mExp, op):
 		m.append(ovar + '=' + op[1].join(exp))
 	return m
 
-circuit = {}
-fpga = {}
+def get_response(prompt):
+	cmd = input(prompt)
+
+	if cmd.lower() == 'q':
+		print("Good Bye!")
+		exit(0)
+
+	return cmd
+
+circuit = None
+fpga = None
 cmd = ""
-i = 0
 
 print('\n\nWelcome to Logic Synthesizer 551')
 
 while cmd != 'Q':
 
-	cmd = input(command['default']+'\n>> ')
+	cmd = get_response(command['default']+'\n>> ')
 
 	if cmd.lower() == 'help':
 		print(command['help'])
@@ -205,9 +213,19 @@ while cmd != 'Q':
 
 		circuit = parse_file('tests/test.pla')
 	
+	if circuit == None:
+		print("Please input a circuit file")
+		continue
+
 	if cmd.lower() == 'func':
-		cmd = input('select a function 1 - 12, press help\n>> ')
-		funcNum = int(cmd)
+		cmd = get_response('select a function 1 - 12, press help\n>> ')
+		funcNum = -1
+
+		try:
+			funcNum = int(cmd)
+		except:
+			continue
+			
 		if funcNum > 12 or funcNum < 1:
 			print("\n<< Invalid Function. Please try again.")
 			continue
@@ -265,14 +283,19 @@ while cmd != 'Q':
 				print('\tessential prime implicants in '+cl+': '+str(epi_count))
 
 	elif cmd.lower() == 'synth-func':
-		cmd = input('select a function 1 - 4, press help\n>> ')
+		cmd = get_response('select a function 1 - 4, press help\n>> ')
 
 		minimized = {} 
 		pi_count = -1 
 		epi_count = -1
 		literals = {}
 
-		funcNum = int(cmd)
+		funcNum = -1
+		try:
+			funcNum = int(cmd)
+		except:
+			continue
+
 		if funcNum > 4 or funcNum < 1:
 			print("\n<< Invalid Function. Please try again.")
 			continue
@@ -283,16 +306,50 @@ while cmd != 'Q':
 			elif funcNum == 2:
 				minimized,pi_count,epi_count,literals = minimize_POS(circuit)
 			
-			cmd = input('# of LUTs, # of input LUT, input connection matrix, lut connection matrix\n>> ')
+			cmd = ""
+			while cmd.lower() != 'q':
+				cmd = input('# of LUTs, # of input LUT, input connection matrix, lut connection matrix\n>> ')
+				try:
+					cmd.split(',')
+					try:
+						int(cmd[0])
+					except:
+						print("Invalid FPGA Config, please try again.")
+						continue
+					try:
+						int(cmd[1])
+					except:
+						print("Invalid FPGA Config, please try again.")
+						continue
+					try:
+						int(cmd[2])
+					except:
+						print("Invalid FPGA Config, please try again.")
+						continue
+					try:
+						int(cmd[3])
+					except:
+						print("Invalid FPGA Config, please try again.")
+						continue
+				except:
+					pass
 
-			cmd = cmd.split(',')
-			fpga = FPGA(num_inputs=len(circuit['inputs']), num_outputs=len(circuit['outputs']), num_luts=int(cmd[0].strip()), lut_type=int(cmd[1].strip()), input_connectionmat=int(cmd[2].strip())==1, lut_connectionmat=int(cmd[3].strip())==1)
+			print('\tFPGA Configuration')
+			print('\t# LUTs:'+cmd[0])
+			print('\t# input LUT'+cmd[1])
+			print('\tinput connection matrix'+ 'yes' if int(cmd[2])==1 else 'no')
+			print('\tLUT connection matrix'+ 'yes' if int(cmd[2])==1 else 'no')
+				
+			fpga = FPGA(num_inputs=len(circuit['inputs']), num_outputs=len(circuit['outputs']), num_luts=int(cmd[0].strip()), lut_type=int(cmd[1].strip()), input_connectionmat=None if int(cmd[2].strip())==0 else 1, lut_connectionmat=None if int(cmd[3].strip())==0 else 1)
 			fpga.init_variables(circuit['inputs'], circuit['outputs'])
 
 			for k,v in minimized.items():
 				fpga.map_function(v, circuit['inputs'], k)
 
 		elif funcNum == 3:
+			if fpga == None:
+				print("Please configure an FPGA.")
+
 			fpga.print_info()
 
 		elif funcNum == 4:
