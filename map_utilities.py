@@ -284,7 +284,7 @@ def fn_make_packet (fn_bstring, lut_type, fpga_num_inputs, output_name):
     fn_graph = to_graph(lut_assignments, fn_bstring, output_lut, output_name, lut_type)
 
     ## Eventually, this should return a tuple of (fn_dict, fn_graph)
-    return lut_assignments, fn_graph
+    return lut_assignments, fn_graph, output_lut
 
 
 
