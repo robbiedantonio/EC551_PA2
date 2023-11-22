@@ -11,6 +11,8 @@ from minimize import *
 from utilities import *
 from getDelaySOP import *
 
+from fpga import *
+from map_utilities import *
 
 filename = 'tests/test.pla'
 
@@ -49,29 +51,34 @@ command = {
       'func': "please select a function 1 - 12",
       "help": 
 '''
-	Engine functions
+	Basic Functions:
 		type \'file\' to input file
 		type \'func\' to select a function
-		type \'synth\' to map functions to LUTs
-		type \'synth-info\' to print LUT info
-		type \'fpga-map\' to map LUTs onto FPGA
-		type \'fpga-info\' to print FPGA info
+		type \'synthfunc\' to select a function
 
-	Synthesis Functions:
-		1. Return the design as a canonical SOP
-		2. Return the design as a canonical POS
-		3. Return the design INVERSE as a canonical SOP
-		4. Return the design INVERSE as a canonical POS
-		5. Return a minimized number of literals representation in SOP
-		\ta. Report on the number of saved literals vs. the canonical version
-		6. Return a minimized number of literals representation in POS
-		\ta. Report on the number of saved literals vs. the canonical version
-		7. Report the number of Prime Implicants
-		8. Report the number of Essential Prime Implicants
-		9. Report the number of ON-Set minterms
-		10. Report the number of ON-Set maxterms
-		11. SOP Gate Delay
-		12. POS Gate Delay
+	Engine Functions:
+		func
+			1. Return the design as a canonical SOP
+			2. Return the design as a canonical POS
+			3. Return the design INVERSE as a canonical SOP
+			4. Return the design INVERSE as a canonical POS
+			5. Return a minimized number of literals representation in SOP
+			\ta. Report on the number of saved literals vs. the canonical version
+			6. Return a minimized number of literals representation in POS
+			\ta. Report on the number of saved literals vs. the canonical version
+			7. Report the number of Prime Implicants
+			8. Report the number of Essential Prime Implicants
+			9. Report the number of ON-Set minterms
+			10. Report the number of ON-Set maxterms
+			11. SOP Gate Delay
+			12. POS Gate Delay
+
+	Synthesis functions:
+		synth-func
+			1. map minimized SOP expression onto FPGA
+			2. map minimized POS expression onto FPGA
+			3. to print FPGA info
+			4. generate bitstream
 '''
 }
 	
@@ -173,9 +180,11 @@ def decode(mExp, op):
 		m.append(ovar + '=' + op[1].join(exp))
 	return m
 
-
+circuit = {}
+fpga = {}
 cmd = ""
 i = 0
+
 print('\n\nWelcome to Logic Synthesizer 551')
 
 while cmd != 'Q':
@@ -254,6 +263,40 @@ while cmd != 'Q':
 				print('\t'+cl+' saved ' + str(canon_literals[cl]-min_literals[ml]) + ' literals')
 				print('\tprime implicants in '+cl+': '+str(pi_count))
 				print('\tessential prime implicants in '+cl+': '+str(epi_count))
+
+	elif cmd.lower() == 'synth-func':
+		cmd = input('select a function 1 - 4, press help\n>> ')
+
+		minimized = {} 
+		pi_count = -1 
+		epi_count = -1
+		literals = {}
+
+		funcNum = int(cmd)
+		if funcNum > 4 or funcNum < 1:
+			print("\n<< Invalid Function. Please try again.")
+			continue
+
+		if funcNum in [1, 2]:
+			if funcNum == 1:
+				minimized,pi_count,epi_count,literals = minimize_SOP(circuit)
+			elif funcNum == 2:
+				minimized,pi_count,epi_count,literals = minimize_POS(circuit)
+			
+			cmd = input('# of LUTs, # of input LUT, input connection matrix, lut connection matrix\n>> ')
+
+			cmd = cmd.split(',')
+			fpga = FPGA(num_inputs=len(circuit['inputs']), num_outputs=len(circuit['outputs']), num_luts=int(cmd[0].strip()), lut_type=int(cmd[1].strip()), input_connectionmat=int(cmd[2].strip())==1, lut_connectionmat=int(cmd[3].strip())==1)
+			fpga.init_variables(circuit['inputs'], circuit['outputs'])
+
+			for k,v in minimized.items():
+				fpga.map_function(v, circuit['inputs'], k)
+
+		elif funcNum == 3:
+			fpga.print_info()
+
+		elif funcNum == 4:
+			pass
 
 				
 

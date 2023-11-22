@@ -20,7 +20,7 @@ from map_utilities import *
 filename = 'tests/test5in.pla'
 circuit = parse(filename)
 
-minimized_SOP_dict, pi_count, epi_count = minimize_SOP(circuit)
+minimized_SOP_dict, pi_count, epi_count, literals = minimize_SOP(circuit)
 print(minimized_SOP_dict)
 
 fpga = FPGA(num_inputs=6, num_outputs=4, num_luts=10, lut_type=4, input_connectionmat=None, lut_connectionmat=None)
